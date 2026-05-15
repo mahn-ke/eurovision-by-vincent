@@ -590,7 +590,7 @@ function initSortableHandlers() {
 
 async function fetchSongs() {
   try {
-    const response = await fetch(`/songs.json?ts=${Date.now()}`, { cache: 'no-store' });
+    const response = await fetch(`https://vimaster.de/prj/2026_eurovision/songs.json?ts=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Failed to fetch songs.json');
 
     const payload = await response.json();
