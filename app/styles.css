@@ -39,6 +39,7 @@ label {
   --bg: #fcfaf4;
   --pill-bg: #fffdf8;
   --surface: #fffdf8;
+  --surface-disabled: #d1d1d1;
   --surface-alt: #f6efe1;
   --line: #dbc8a0;
   --pill-line: #e0c9a8;
@@ -63,8 +64,12 @@ body {
     var(--bg);
 }
 
-.app {
+header {
   max-width: 1100px;
+}
+
+.app {
+  max-width: 95vw;
   margin: 0 auto;
   padding: 2rem 1rem 3rem;
 }
@@ -90,6 +95,10 @@ body {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.panel[data-editable="false"] {
+  background: var(--surface-disabled);
 }
 
 .panel {
