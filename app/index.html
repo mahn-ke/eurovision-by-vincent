@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Eurovision Ranking</title>
+    <title>Eurovision Rangliste</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -34,24 +34,24 @@
     </script>
     <main class="app">
       <header class="hero">
-        <h1>Eurovision Live Ranking</h1>
+        <h1>Eurovision Live-Rangliste</h1>
       </header>
 
       <section class="columns">
         <div class="panel" data-list-container="notRanked">
-          <h2>Not Yet Ranked</h2>
-          <ul id="notRankedList" class="song-list" aria-label="Not Yet Ranked songs"></ul>
-          <p class="hint">New songs appear here automatically every few seconds.</p>
+          <h2>Noch nicht bewertet</h2>
+          <ul id="notRankedList" class="song-list" aria-label="Noch nicht bewertete Lieder"></ul>
+          <p class="hint">Neue Lieder erscheinen hier automatisch alle paar Sekunden.</p>
         </div>
 
         <div class="panel" data-list-container="ranked">
-          <h2>Your Ranking</h2>
-          <ul id="rankedList" class="song-list" aria-label="Your ranked songs"></ul>
-          <p class="hint">Top is your favorite. Reorder by dragging.</p>
+          <h2>Deine Rangliste</h2>
+          <ul id="rankedList" class="song-list" aria-label="Deine bewerteten Lieder"></ul>
+          <p class="hint">Oben ist dein Favorit. Per Ziehen neu sortieren.</p>
         </div>
       </section>
 
-      <p id="emptyState" class="empty-state" hidden>No songs available yet.</p>
+      <p id="emptyState" class="empty-state" hidden>Noch keine Lieder verfuegbar.</p>
     </main>
 
     <template id="songTemplate">

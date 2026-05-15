@@ -31,7 +31,7 @@ test.describe('shared auth ranking', () => {
     await expect(page.locator('[data-user-panel]')).toHaveCount(3);
 
     const panelTitles = await page.locator('.columns .panel h2').allTextContents();
-    expect(panelTitles.map((title) => title.trim())).toEqual(['Not Yet Ranked', 'alice (you)', 'bob', 'üsernäße']);
+    expect(panelTitles.map((title) => title.trim())).toEqual(['Noch nicht bewertet', 'alice (du)', 'bob', 'üsernäße']);
 
     await expect(page.locator('[data-panel-role="unranked"] .song-item')).toHaveCount(8);
     await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(0);
@@ -40,18 +40,18 @@ test.describe('shared auth ranking', () => {
     await expect(page.locator('[data-user-panel][data-username="alice"][data-editable="true"]')).toHaveCount(1);
     await expect(page.locator('[data-user-panel][data-username="bob"][data-editable="false"]')).toHaveCount(1);
 
-    await dragSongToPanel(page, '[data-panel-role="unranked"]', 'Song A', '[data-user-panel][data-username="bob"] [data-user-list="true"]');
+    await dragSongToPanel(page, '[data-panel-role="unranked"]', 'Lied A', '[data-user-panel][data-username="bob"] [data-user-list="true"]');
 
     await expect(page.locator('[data-user-panel][data-username="bob"] .song-item')).toHaveCount(0);
-    await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Song A');
+    await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Lied A');
 
-    await dragSongToPanel(page, '[data-panel-role="unranked"]', 'Song A', '[data-user-panel][data-username="alice"] [data-user-list="true"]');
-    await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Song A');
-    await expect(page.locator('[data-panel-role="unranked"]')).not.toContainText('Song A');
+    await dragSongToPanel(page, '[data-panel-role="unranked"]', 'Lied A', '[data-user-panel][data-username="alice"] [data-user-list="true"]');
+    await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied A');
+    await expect(page.locator('[data-panel-role="unranked"]')).not.toContainText('Lied A');
 
-    await dragSongToPanel(page, '[data-user-panel][data-username="alice"]', 'Song A', '[data-panel-role="unranked"] [data-unranked-list="true"]');
+    await dragSongToPanel(page, '[data-user-panel][data-username="alice"]', 'Lied A', '[data-panel-role="unranked"] [data-unranked-list="true"]');
     await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(0);
-    await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Song A');
+    await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Lied A');
 
     await expect(page.locator('[data-user-panel][data-username="bob"] .song-item')).toHaveCount(0);
   });
@@ -71,24 +71,24 @@ test.describe('shared auth ranking', () => {
     await dragSongToPanel(
       alicePage,
       '[data-panel-role="unranked"]',
-      'Song B',
+      'Lied B',
       '[data-user-panel][data-username="alice"] [data-user-list="true"]'
     );
 
-    await expect(alicePage.locator('[data-user-panel][data-username="alice"]')).toContainText('Song B');
-    await expect(alicePage.locator('[data-panel-role="unranked"]')).not.toContainText('Song B');
+    await expect(alicePage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied B');
+    await expect(alicePage.locator('[data-panel-role="unranked"]')).not.toContainText('Lied B');
 
     await expect
       .poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
         timeout: 10_000,
       })
-      .toEqual(['Song B']);
+      .toEqual(['Lied B']);
 
     await expect.poll(async () => panelSongCount(bobPage, '[data-panel-role="unranked"]'), {
       timeout: 2_000,
     }).toBe(bobUnrankedBefore);
 
-    await expect(bobPage.locator('[data-panel-role="unranked"]')).toContainText('Song B');
+    await expect(bobPage.locator('[data-panel-role="unranked"]')).toContainText('Lied B');
 
     await alicePage.close();
     await bobPage.close();

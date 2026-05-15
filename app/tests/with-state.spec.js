@@ -93,8 +93,8 @@ test.describe('suite with state', () => {
 
   test('stateful ranking and live additions', async ({ page }) => {
     const songsMock = await installSongsMock(page, [
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
     ]);
 
     await page.reload();
@@ -104,31 +104,31 @@ test.describe('suite with state', () => {
     await expect(page.locator('#rankedList .song-item')).toHaveCount(0);
     await expectUniqueSongTitles(page);
 
-    await dragSongToList(page, 'Song A', '#rankedList');
+    await dragSongToList(page, 'Lied A', '#rankedList');
     await expect(page.locator('#rankedList .song-item')).toHaveCount(1);
-    await expect(page.locator('#rankedList')).toContainText('Song A');
+    await expect(page.locator('#rankedList')).toContainText('Lied A');
     await expectUniqueSongTitles(page);
 
     songsMock.setSongs([
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
-      { artist: 'Gamma', title: 'Song C', country: 'SE' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
     ]);
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(2, {
       timeout: 2_000,
     });
-    await expect(page.locator('#notRankedList')).toContainText('Song C');
+    await expect(page.locator('#notRankedList')).toContainText('Lied C');
     await expectUniqueSongTitles(page);
 
     songsMock.setSongs([
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
-      { artist: 'Gamma', title: 'Song C', country: 'SE' },
-      { artist: 'Delta', title: 'Song D', country: 'IT' },
-      { artist: 'Epsilon', title: 'Song E', country: 'NO' },
-      { artist: 'Zeta', title: 'Song F', country: 'FI' },
-      { artist: 'Eta', title: 'Song G', country: 'CH' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
+      { artist: 'Delta', title: 'Lied D', country: 'IT' },
+      { artist: 'Epsilon', title: 'Lied E', country: 'NO' },
+      { artist: 'Zeta', title: 'Lied F', country: 'FI' },
+      { artist: 'Eta', title: 'Lied G', country: 'CH' },
     ]);
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(6, {
@@ -136,21 +136,21 @@ test.describe('suite with state', () => {
     });
     await expectUniqueSongTitles(page);
 
-    await dragSongToList(page, 'Song D', '#rankedList');
-    await dragSongToList(page, 'Song E', '#rankedList');
+    await dragSongToList(page, 'Lied D', '#rankedList');
+    await dragSongToList(page, 'Lied E', '#rankedList');
 
     await expect(page.locator('#rankedList .song-item')).toHaveCount(3);
     await expectUniqueSongTitles(page);
 
     const rankedBeforeReorder = await getRankedTitles(page);
 
-    await dragSongBeforeSong(page, 'Song E', 'Song A');
+    await dragSongBeforeSong(page, 'Lied E', 'Lied A');
     let rankedAfterReorder = await getRankedTitles(page);
 
     // Some browsers can interpret the first drop geometry as a no-op.
     // Try the opposite direction to still validate in-list reordering behavior.
     if (rankedAfterReorder.join('|') === rankedBeforeReorder.join('|')) {
-      await dragSongBeforeSong(page, 'Song A', 'Song E');
+      await dragSongBeforeSong(page, 'Lied A', 'Lied E');
       rankedAfterReorder = await getRankedTitles(page);
     }
 
@@ -158,30 +158,30 @@ test.describe('suite with state', () => {
     await expectUniqueSongTitles(page);
 
     songsMock.setSongs([
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
-      { artist: 'Gamma', title: 'Song C', country: 'SE' },
-      { artist: 'Delta', title: 'Song D', country: 'IT' },
-      { artist: 'Epsilon', title: 'Song E', country: 'NO' },
-      { artist: 'Zeta', title: 'Song F', country: 'FI' },
-      { artist: 'Eta', title: 'Song G', country: 'CH' },
-      { artist: 'Theta', title: 'Song H', country: 'ES' },
-      { artist: 'Iota', title: 'Song I', country: 'PT' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
+      { artist: 'Delta', title: 'Lied D', country: 'IT' },
+      { artist: 'Epsilon', title: 'Lied E', country: 'NO' },
+      { artist: 'Zeta', title: 'Lied F', country: 'FI' },
+      { artist: 'Eta', title: 'Lied G', country: 'CH' },
+      { artist: 'Theta', title: 'Lied H', country: 'ES' },
+      { artist: 'Iota', title: 'Lied I', country: 'PT' },
     ]);
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(6, {
       timeout: 2_000,
     });
-    await expect(page.locator('#notRankedList')).toContainText('Song H');
-    await expect(page.locator('#notRankedList')).toContainText('Song I');
+    await expect(page.locator('#notRankedList')).toContainText('Lied H');
+    await expect(page.locator('#notRankedList')).toContainText('Lied I');
     await expectUniqueSongTitles(page);
   });
 
   test('no duplicate after long hold during live update', async ({ page }) => {
     const songsMock = await installSongsMock(page, [
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
-      { artist: 'Gamma', title: 'Song C', country: 'SE' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
     ]);
 
     await page.reload();
@@ -190,32 +190,32 @@ test.describe('suite with state', () => {
     });
     await expectUniqueSongTitles(page);
 
-    const heldDrag = await startDraggingSong(page, 'Song A', '#rankedList');
+    const heldDrag = await startDraggingSong(page, 'Lied A', '#rankedList');
 
     songsMock.setSongs([
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
-      { artist: 'Gamma', title: 'Song C', country: 'SE' },
-      { artist: 'Delta', title: 'Song D', country: 'IT' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
+      { artist: 'Delta', title: 'Lied D', country: 'IT' },
     ]);
 
     await holdDraggedSong(heldDrag, 2_000);
-    await expect(page.locator('#notRankedList')).toContainText('Song D', {
+    await expect(page.locator('#notRankedList')).toContainText('Lied D', {
       timeout: 2_000,
     });
     await expectUniqueSongTitles(page);
 
     await dropIntoList(heldDrag);
 
-    await expect.poll(async () => getTitleCount(page, 'Song A')).toBe(1);
+    await expect.poll(async () => getTitleCount(page, 'Lied A')).toBe(1);
     await expectUniqueSongTitles(page);
   });
 
   test('new song is added normally while another song is held', async ({ page }) => {
     const songsMock = await installSongsMock(page, [
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
-      { artist: 'Gamma', title: 'Song C', country: 'SE' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
     ]);
 
     await page.reload();
@@ -224,25 +224,25 @@ test.describe('suite with state', () => {
     });
     await expectUniqueSongTitles(page);
 
-    const heldDrag = await startDraggingSong(page, 'Song B', '#rankedList');
+    const heldDrag = await startDraggingSong(page, 'Lied B', '#rankedList');
 
     songsMock.setSongs([
-      { artist: 'Alpha', title: 'Song A', country: 'DE' },
-      { artist: 'Beta', title: 'Song B', country: 'GB' },
-      { artist: 'Gamma', title: 'Song C', country: 'SE' },
-      { artist: 'Delta', title: 'Song D', country: 'IT' },
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
+      { artist: 'Delta', title: 'Lied D', country: 'IT' },
     ]);
 
     await holdDraggedSong(heldDrag, 2_000);
-    await expect(page.locator('#notRankedList')).toContainText('Song D', {
+    await expect(page.locator('#notRankedList')).toContainText('Lied D', {
       timeout: 2_000,
     });
-    await expect.poll(async () => getTitleCount(page, 'Song D')).toBe(1);
+    await expect.poll(async () => getTitleCount(page, 'Lied D')).toBe(1);
     await expectUniqueSongTitles(page);
 
     await dropIntoList(heldDrag);
 
-    await expect.poll(async () => getTitleCount(page, 'Song B')).toBe(1);
+    await expect.poll(async () => getTitleCount(page, 'Lied B')).toBe(1);
     await expectUniqueSongTitles(page);
   });
 });

@@ -26,7 +26,7 @@ html.invert .country-pill span
 label {
   float: right;
   padding: 15px 15px 10px 15px;
-  border: 1px solid #000000;
+  border: 2px solid var(--line);
   border-radius: 15px;
   margin: 15px;
 }

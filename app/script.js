@@ -273,7 +273,7 @@ function createPanel({
 
   const hintEl = document.createElement('p');
   hintEl.className = 'hint';
-  hintEl.textContent = hint;
+  hintEl.innerHTML = hint;
 
   panel.appendChild(heading);
   panel.appendChild(list);
@@ -295,9 +295,9 @@ function ensureSharedShell() {
   const unrankedPanel = createPanel({
     role: 'unranked',
     editable: true,
-    title: 'Not Yet Ranked',
-    hint: 'This column is local to you. Drag songs into your ranking to share your picks.',
-    listAria: 'Not Yet Ranked songs',
+    title: 'Noch nicht bewertet',
+    hint: 'Diese Spalte siehst nur du. <br />Ziehe Lieder in deine Rangliste, um deine Auswahl zu teilen.',
+    listAria: 'Noch nicht bewertete Lieder',
     listDataset: {
       unrankedList: 'true',
     },
@@ -313,11 +313,11 @@ function ensureSharedShell() {
       role: 'user',
       username,
       editable: isOwn,
-      title: isOwn ? `${username} (you)` : username,
+      title: isOwn ? `${username} (du)` : username,
       hint: isOwn
-        ? 'Drag songs from Not Yet Ranked into your list. Changes are shared live.'
-        : 'Live view. This ranking updates from the server.',
-      listAria: `${username} ranking`,
+        ? 'Ziehe Lieder aus der "Noch nicht bewertet" Spalte in diese Liste.<br />Anderungen werden live geteilt.'
+        : '',
+      listAria: `Rangliste von ${username}`,
       listDataset: {
         userList: 'true',
         username,
