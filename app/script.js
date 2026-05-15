@@ -37,6 +37,8 @@ const sharedState = {
   socket: null,
   shellSignature: '',
   listByUser: new Map(),
+  unrankedListEl: null,
+  localUnranked: [],
   sortableInitialized: false,
   dragging: false,
 };
@@ -215,6 +217,71 @@ function arrangeUsers(users, ownUsername) {
   return [ownUsername, ...filtered.filter((name) => name !== ownUsername)];
 }
 
+function allKnownSongIds() {
+  return baseSongOrder().filter((songId) => Boolean(songId && state.songsById[songId]));
+}
+
+function normalizeLocalUnranked() {
+  const validSongs = new Set(allKnownSongIds());
+  const ownRanking = new Set(getRankedOnlyForUser(sharedState.username));
+  const deduped = [];
+  const seen = new Set();
+
+  for (const songId of sharedState.localUnranked) {
+    if (!validSongs.has(songId) || ownRanking.has(songId) || seen.has(songId)) continue;
+    seen.add(songId);
+    deduped.push(songId);
+  }
+
+  for (const songId of allKnownSongIds()) {
+    if (ownRanking.has(songId) || seen.has(songId)) continue;
+    seen.add(songId);
+    deduped.push(songId);
+  }
+
+  sharedState.localUnranked = deduped;
+}
+
+function createPanel({
+  role,
+  username,
+  editable,
+  title,
+  hint,
+  listAria,
+  listDataset,
+}) {
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  if (role) panel.dataset.panelRole = role;
+  if (username) panel.dataset.username = username;
+  if (editable !== undefined) panel.dataset.editable = editable ? 'true' : 'false';
+
+  if (role === 'user') {
+    panel.dataset.userPanel = 'true';
+  }
+
+  const heading = document.createElement('h2');
+  heading.textContent = title;
+
+  const list = document.createElement('ul');
+  list.className = 'song-list';
+  list.setAttribute('aria-label', listAria);
+  Object.entries(listDataset).forEach(([key, value]) => {
+    list.dataset[key] = value;
+  });
+
+  const hintEl = document.createElement('p');
+  hintEl.className = 'hint';
+  hintEl.textContent = hint;
+
+  panel.appendChild(heading);
+  panel.appendChild(list);
+  panel.appendChild(hintEl);
+
+  return { panel, list };
+}
+
 function ensureSharedShell() {
   if (!columnsEl) return;
 
@@ -223,61 +290,70 @@ function ensureSharedShell() {
 
   columnsEl.innerHTML = '';
   sharedState.listByUser = new Map();
+  sharedState.unrankedListEl = null;
+
+  const unrankedPanel = createPanel({
+    role: 'unranked',
+    editable: true,
+    title: 'Not Yet Ranked',
+    hint: 'This column is local to you. Drag songs into your ranking to share your picks.',
+    listAria: 'Not Yet Ranked songs',
+    listDataset: {
+      unrankedList: 'true',
+    },
+  });
+
+  columnsEl.appendChild(unrankedPanel.panel);
+  sharedState.unrankedListEl = unrankedPanel.list;
 
   for (const username of sharedState.users) {
     const isOwn = username === sharedState.username;
 
-    const panel = document.createElement('div');
-    panel.className = 'panel';
-    panel.dataset.userPanel = 'true';
-    panel.dataset.username = username;
-    panel.dataset.editable = isOwn ? 'true' : 'false';
+    const userPanel = createPanel({
+      role: 'user',
+      username,
+      editable: isOwn,
+      title: isOwn ? `${username} (you)` : username,
+      hint: isOwn
+        ? 'Drag songs from Not Yet Ranked into your list. Changes are shared live.'
+        : 'Live view. This ranking updates from the server.',
+      listAria: `${username} ranking`,
+      listDataset: {
+        userList: 'true',
+        username,
+      },
+    });
 
-    const title = document.createElement('h2');
-    title.textContent = isOwn ? `${username} (you)` : username;
-
-    const list = document.createElement('ul');
-    list.className = 'song-list';
-    list.setAttribute('aria-label', `${username} ranking`);
-    list.dataset.userList = 'true';
-    list.dataset.username = username;
-
-    const hint = document.createElement('p');
-    hint.className = 'hint';
-    hint.textContent = isOwn
-      ? 'Reorder your ranking. Changes are shared live.'
-      : 'Live view. This ranking updates from the server.';
-
-    panel.appendChild(title);
-    panel.appendChild(list);
-    panel.appendChild(hint);
-
-    columnsEl.appendChild(panel);
-    sharedState.listByUser.set(username, list);
+    columnsEl.appendChild(userPanel.panel);
+    sharedState.listByUser.set(username, userPanel.list);
   }
 
   sharedState.sortableInitialized = false;
   sharedState.shellSignature = signature;
 }
 
-function getUserRanking(user) {
+function getRankedOnlyForUser(user) {
   const raw = Array.isArray(sharedState.rankingsByUser[user]) ? sharedState.rankingsByUser[user] : [];
-  const valid = raw.filter((songId) => Boolean(songId && state.songsById[songId]));
-  const used = new Set(valid);
-  const order = valid.slice();
-
-  for (const songId of baseSongOrder()) {
-    if (used.has(songId)) continue;
-    used.add(songId);
-    order.push(songId);
-  }
-
-  return order;
+  const seen = new Set();
+  return raw.filter((songId) => {
+    if (!songId || !state.songsById[songId] || seen.has(songId)) return false;
+    seen.add(songId);
+    return true;
+  });
 }
 
 function renderShared() {
   ensureSharedShell();
   if (sharedState.dragging) return;
+
+  normalizeLocalUnranked();
+
+  if (sharedState.unrankedListEl) {
+    sharedState.unrankedListEl.innerHTML = '';
+    for (const songId of sharedState.localUnranked) {
+      sharedState.unrankedListEl.appendChild(songElementWithDrag(songId, true));
+    }
+  }
 
   for (const user of sharedState.users) {
     const list = sharedState.listByUser.get(user);
@@ -286,7 +362,7 @@ function renderShared() {
     const isOwn = user === sharedState.username;
     list.innerHTML = '';
 
-    for (const songId of getUserRanking(user)) {
+    for (const songId of getRankedOnlyForUser(user)) {
       list.appendChild(songElementWithDrag(songId, isOwn));
     }
   }
@@ -302,6 +378,13 @@ function syncOwnRankingFromDom() {
   const ownList = sharedState.listByUser.get(sharedState.username);
   if (!ownList) return [];
   return [...ownList.querySelectorAll('.song-item')]
+    .map((item) => item.dataset.songId)
+    .filter((songId) => Boolean(songId && state.songsById[songId]));
+}
+
+function syncLocalUnrankedFromDom() {
+  if (!sharedState.unrankedListEl) return [];
+  return [...sharedState.unrankedListEl.querySelectorAll('.song-item')]
     .map((item) => item.dataset.songId)
     .filter((songId) => Boolean(songId && state.songsById[songId]));
 }
@@ -323,20 +406,35 @@ async function persistOwnRanking(ranking) {
 function initSharedSortable() {
   if (sharedState.sortableInitialized) return;
   const ownList = sharedState.listByUser.get(sharedState.username);
-  if (!ownList) return;
+  const unrankedList = sharedState.unrankedListEl;
+  if (!ownList || !unrankedList) return;
+
+  const onDragEnd = () => {
+    sharedState.dragging = false;
+    const ranking = syncOwnRankingFromDom();
+    sharedState.rankingsByUser[sharedState.username] = ranking;
+    sharedState.localUnranked = syncLocalUnrankedFromDom();
+    normalizeLocalUnranked();
+    persistOwnRanking(ranking);
+    renderShared();
+  };
+
+  const onDragStart = () => {
+    sharedState.dragging = true;
+  };
 
   Sortable.create(ownList, {
+    group: 'shared-songs',
     animation: 150,
-    onStart: () => {
-      sharedState.dragging = true;
-    },
-    onEnd: () => {
-      sharedState.dragging = false;
-      const ranking = syncOwnRankingFromDom();
-      sharedState.rankingsByUser[sharedState.username] = ranking;
-      persistOwnRanking(ranking);
-      renderShared();
-    },
+    onStart: onDragStart,
+    onEnd: onDragEnd,
+  });
+
+  Sortable.create(unrankedList, {
+    group: 'shared-songs',
+    animation: 150,
+    onStart: onDragStart,
+    onEnd: onDragEnd,
   });
 
   sharedState.sortableInitialized = true;
@@ -421,6 +519,7 @@ async function tryEnableSharedMode() {
     for (const user of sharedState.users) {
       sharedState.rankingsByUser[user] = [];
     }
+    sharedState.localUnranked = allKnownSongIds();
 
     renderShared();
     await fetchSharedRankings();

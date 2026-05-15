@@ -1,15 +1,18 @@
 const { test, expect } = require('@playwright/test');
 
-async function dragSongBeforeInPanel(page, panelSelector, sourceTitle, targetTitle) {
-  const panel = page.locator(panelSelector);
-  const source = panel.locator('.song-item', { hasText: sourceTitle }).first();
-  const target = panel.locator('.song-item', { hasText: targetTitle }).first();
-  await source.dragTo(target, { targetPosition: { x: 8, y: 2 } });
-}
-
 async function firstTwoTitles(page, panelSelector) {
   const titles = await page.locator(`${panelSelector} .song-title`).allTextContents();
   return titles.slice(0, 2).map((title) => title.trim());
+}
+
+async function dragSongToPanel(page, fromSelector, songTitle, toSelector) {
+  const source = page.locator(`${fromSelector} .song-item`, { hasText: songTitle }).first();
+  const target = page.locator(toSelector);
+  await source.dragTo(target);
+}
+
+async function panelSongCount(page, panelSelector) {
+  return page.locator(`${panelSelector} .song-item`).count();
 }
 
 test.describe('shared auth ranking', () => {
@@ -24,24 +27,36 @@ test.describe('shared auth ranking', () => {
   test('valid token shows own column first and keeps others read-only', async ({ page }) => {
     await page.goto('/?token=abc&pollMs=1000');
 
+    await expect(page.locator('[data-panel-role="unranked"]')).toHaveCount(1);
     await expect(page.locator('[data-user-panel]')).toHaveCount(3);
 
-    const panelUsernames = await page
-      .locator('[data-user-panel]')
-      .evaluateAll((els) => els.map((el) => el.getAttribute('data-username')));
-    expect(panelUsernames).toEqual(['alice', 'bob', 'üsernäße']);
+    const panelTitles = await page.locator('.columns .panel h2').allTextContents();
+    expect(panelTitles.map((title) => title.trim())).toEqual(['Not Yet Ranked', 'alice (you)', 'bob', 'üsernäße']);
+
+    await expect(page.locator('[data-panel-role="unranked"] .song-item')).toHaveCount(8);
+    await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(0);
+    await expect(page.locator('[data-user-panel][data-username="bob"] .song-item')).toHaveCount(0);
 
     await expect(page.locator('[data-user-panel][data-username="alice"][data-editable="true"]')).toHaveCount(1);
     await expect(page.locator('[data-user-panel][data-username="bob"][data-editable="false"]')).toHaveCount(1);
 
-    const before = await firstTwoTitles(page, '[data-user-panel][data-username="bob"]');
-    await dragSongBeforeInPanel(page, '[data-user-panel][data-username="bob"]', 'Song B', 'Song A');
-    const after = await firstTwoTitles(page, '[data-user-panel][data-username="bob"]');
+    await dragSongToPanel(page, '[data-panel-role="unranked"]', 'Song A', '[data-user-panel][data-username="bob"] [data-user-list="true"]');
 
-    expect(after).toEqual(before);
+    await expect(page.locator('[data-user-panel][data-username="bob"] .song-item')).toHaveCount(0);
+    await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Song A');
+
+    await dragSongToPanel(page, '[data-panel-role="unranked"]', 'Song A', '[data-user-panel][data-username="alice"] [data-user-list="true"]');
+    await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Song A');
+    await expect(page.locator('[data-panel-role="unranked"]')).not.toContainText('Song A');
+
+    await dragSongToPanel(page, '[data-user-panel][data-username="alice"]', 'Song A', '[data-panel-role="unranked"] [data-unranked-list="true"]');
+    await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(0);
+    await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Song A');
+
+    await expect(page.locator('[data-user-panel][data-username="bob"] .song-item')).toHaveCount(0);
   });
 
-  test('ranking updates are broadcast to other authenticated users', async ({ browser }) => {
+  test('own ranking updates are broadcast while unranked stays local per client', async ({ browser }) => {
     const alicePage = await browser.newPage();
     const bobPage = await browser.newPage();
 
@@ -51,21 +66,29 @@ test.describe('shared auth ranking', () => {
     await expect(alicePage.locator('[data-user-panel]')).toHaveCount(3);
     await expect(bobPage.locator('[data-user-panel]')).toHaveCount(3);
 
-    const aliceOwnBefore = await firstTwoTitles(alicePage, '[data-user-panel][data-username="alice"]');
+    const bobUnrankedBefore = await panelSongCount(bobPage, '[data-panel-role="unranked"]');
 
-    await dragSongBeforeInPanel(alicePage, '[data-user-panel][data-username="alice"]', 'Song B', 'Song A');
+    await dragSongToPanel(
+      alicePage,
+      '[data-panel-role="unranked"]',
+      'Song B',
+      '[data-user-panel][data-username="alice"] [data-user-list="true"]'
+    );
+
+    await expect(alicePage.locator('[data-user-panel][data-username="alice"]')).toContainText('Song B');
+    await expect(alicePage.locator('[data-panel-role="unranked"]')).not.toContainText('Song B');
 
     await expect
       .poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
         timeout: 10_000,
       })
-      .not.toEqual(aliceOwnBefore);
+      .toEqual(['Song B']);
 
-    await expect
-      .poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
-        timeout: 10_000,
-      })
-      .toEqual(['Song B', 'Song A']);
+    await expect.poll(async () => panelSongCount(bobPage, '[data-panel-role="unranked"]'), {
+      timeout: 2_000,
+    }).toBe(bobUnrankedBefore);
+
+    await expect(bobPage.locator('[data-panel-role="unranked"]')).toContainText('Song B');
 
     await alicePage.close();
     await bobPage.close();

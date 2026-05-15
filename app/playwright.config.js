@@ -9,9 +9,9 @@ module.exports = defineConfig({
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
   ],
-  timeout: 120_000,
+  timeout: 10_000,
   expect: {
-    timeout: 20_000,
+    timeout: 10_000,
   },
   use: {
     baseURL: 'http://localhost:3001',
