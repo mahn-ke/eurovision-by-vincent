@@ -26,4 +26,6 @@ RUN npm ci --omit=dev
 RUN apk add --no-cache curl \
     && npm ci
 
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD curl -f http://localhost:3000/healthz || exit 1
+
 CMD ["npm", "run", "start"]
