@@ -182,6 +182,17 @@ function broadcastRankings(updatedBy) {
 const server = http.createServer((req, res) => {
   const pathname = safePathname(req.url || '/');
 
+  if (pathname === '/healthz') {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
+    });
+    res.end('ok');
+    return;
+  }
+
   if (pathname === '/api/auth') {
     const username = resolveUsername(req.url || '/');
     if (!username) {
