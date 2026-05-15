@@ -1,0 +1,6 @@
+{
+    "name": "eurovision-by-vincent",
+    "scripts": {
+        "start": "node main.js"
+    }
+}
