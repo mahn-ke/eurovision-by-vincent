@@ -1,0 +1,150 @@
+{
+  "config": {
+    "configFile": "/Users/vincent.mahnke/Desktop/esc/playwright.config.js",
+    "rootDir": "/Users/vincent.mahnke/Desktop/esc/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/vincent.mahnke/Desktop/esc/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/vincent.mahnke/Desktop/esc/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.60.0",
+    "workers": 9,
+    "webServer": {
+      "command": "node server.js",
+      "port": 3001,
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "with-state.spec.js",
+      "file": "with-state.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "suite with state",
+          "file": "with-state.spec.js",
+          "line": 23,
+          "column": 6,
+          "specs": [
+            {
+              "title": "stateful ranking and live additions",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 20453,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"Song E\"\u001b[39m\nReceived string:    \u001b[31m\"Song A\"\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"Song E\"\u001b[39m\nReceived string:    \u001b[31m\"Song A\"\u001b[39m\n    at /Users/vincent.mahnke/Desktop/esc/tests/with-state.spec.js:77:28",
+                        "location": {
+                          "file": "/Users/vincent.mahnke/Desktop/esc/tests/with-state.spec.js",
+                          "column": 28,
+                          "line": 77
+                        },
+                        "snippet": "  75 |\n  76 |     const rankedTexts = await page.locator('#rankedList .song-title').allTextContents();\n> 77 |     expect(rankedTexts[0]).toContain('Song E');\n     |                            ^\n  78 |\n  79 |     writeSongs([\n  80 |       { artist: 'Alpha', title: 'Song A', country: 'DE' },"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/vincent.mahnke/Desktop/esc/tests/with-state.spec.js",
+                            "column": 28,
+                            "line": 77
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"Song E\"\u001b[39m\nReceived string:    \u001b[31m\"Song A\"\u001b[39m\n\n  75 |\n  76 |     const rankedTexts = await page.locator('#rankedList .song-title').allTextContents();\n> 77 |     expect(rankedTexts[0]).toContain('Song E');\n     |                            ^\n  78 |\n  79 |     writeSongs([\n  80 |       { artist: 'Alpha', title: 'Song A', country: 'DE' },\n    at /Users/vincent.mahnke/Desktop/esc/tests/with-state.spec.js:77:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-14T17:28:08.684Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/vincent.mahnke/Desktop/esc/test-results/with-state-suite-with-stat-f86df--ranking-and-live-additions/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/vincent.mahnke/Desktop/esc/tests/with-state.spec.js",
+                        "column": 28,
+                        "line": 77
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "0fee12bc2b52e48e9ad2-c57bafe7ab0d117e6af5",
+              "file": "with-state.spec.js",
+              "line": 30,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-05-14T17:28:08.508Z",
+    "duration": 20743.196999999996,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

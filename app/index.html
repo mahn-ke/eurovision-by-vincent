@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eurovision Ranking</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <label for="invertColor">
+      <img class="white" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLW1vb24taWNvbiBsdWNpZGUtbW9vbiI+PHBhdGggZD0iTTIwLjk4NSAxMi40ODZhOSA5IDAgMSAxLTkuNDczLTkuNDcyYy40MDUtLjAyMi42MTcuNDYuNDAyLjgwM2E2IDYgMCAwIDAgOC4yNjggOC4yNjhjLjM0NC0uMjE1LjgyNS0uMDA0LjgwMy40MDEiLz48L3N2Zz4="/></label>
+    <input type="checkbox" id="invertColor" name="invertColor" style="display: none;" />
+    <script>
+      const invertCheckbox = document.getElementById('invertColor');
+      const htmlEl = document.documentElement;
+
+      // Load saved preference
+      const savedPreference = localStorage.getItem('invertColor') === 'true';
+      invertCheckbox.checked = savedPreference;
+      if (savedPreference) {
+        htmlEl.classList.add('invert');
+      }
+
+      // Toggle class and save preference on change
+      invertCheckbox.addEventListener('change', () => {
+        if (invertCheckbox.checked) {
+          htmlEl.classList.add('invert');
+          localStorage.setItem('invertColor', 'true');
+        } else {
+          htmlEl.classList.remove('invert');
+          localStorage.setItem('invertColor', 'false');
+        }
+      });
+    </script>
+    <main class="app">
+      <header class="hero">
+        <h1>Eurovision Live Ranking</h1>
+      </header>
+
+      <section class="columns">
+        <div class="panel" data-list-container="notRanked">
+          <h2>Not Yet Ranked</h2>
+          <ul id="notRankedList" class="song-list" aria-label="Not Yet Ranked songs"></ul>
+          <p class="hint">New songs appear here automatically every few seconds.</p>
+        </div>
+
+        <div class="panel" data-list-container="ranked">
+          <h2>Your Ranking</h2>
+          <ul id="rankedList" class="song-list" aria-label="Your ranked songs"></ul>
+          <p class="hint">Top is your favorite. Reorder by dragging.</p>
+        </div>
+      </section>
+
+      <p id="emptyState" class="empty-state" hidden>No songs available yet.</p>
+    </main>
+
+    <template id="songTemplate">
+      <li class="song-item" draggable="true">
+        <span class="country-pill"><span></span></span>
+        <div class="song-text">
+          <strong class="song-title"></strong>
+          <span class="song-artist"></span>
+        </div>
+      </li>
+    </template>
+
+    <script src="/node_modules/sortablejs/Sortable.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
