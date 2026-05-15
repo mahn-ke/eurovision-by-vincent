@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'eurovision-ranking-state-v1';
+const SHARED_STORAGE_KEY_PREFIX = 'eurovision-shared-ranking-state-v1';
 const DEFAULT_POLL_MS = 20_000;
 const QUERY_PARAMS = new URLSearchParams(window.location.search);
 const QUERY_TOKEN = QUERY_PARAMS.get('token') || '';
@@ -39,9 +40,15 @@ const sharedState = {
   listByUser: new Map(),
   unrankedListEl: null,
   localUnranked: [],
+  ownRanking: [],
+  hasOwnRanking: false,
   sortableInitialized: false,
   dragging: false,
 };
+
+function sharedStorageKey(username) {
+  return `${SHARED_STORAGE_KEY_PREFIX}:${username}:${QUERY_TOKEN}`;
+}
 
 function toSongId(song) {
   const artist = String(song.artist || song.arist || '').trim();
@@ -56,6 +63,21 @@ function normalizeSong(raw) {
   const country = String(raw.country || '').trim().toUpperCase();
   const id = toSongId({ artist, title, country });
   return { id, artist, title, country };
+}
+
+function sanitizeRanking(ranking) {
+  if (!Array.isArray(ranking)) return [];
+
+  const seen = new Set();
+  const cleaned = [];
+
+  for (const songId of ranking) {
+    if (typeof songId !== 'string' || !songId || seen.has(songId)) continue;
+    seen.add(songId);
+    cleaned.push(songId);
+  }
+
+  return cleaned;
 }
 
 function baseSongOrder() {
@@ -90,6 +112,59 @@ function loadState() {
     state.ranked = [];
     state.notRanked = [];
   }
+}
+
+function saveSharedOwnRanking() {
+  if (!sharedState.enabled || !sharedState.username) return;
+
+  const payload = {
+    ranking: sharedState.ownRanking.slice(),
+  };
+
+  localStorage.setItem(sharedStorageKey(sharedState.username), JSON.stringify(payload));
+}
+
+function loadSharedOwnRanking() {
+  if (!sharedState.username) {
+    sharedState.ownRanking = [];
+    sharedState.hasOwnRanking = false;
+    return;
+  }
+
+  try {
+    const raw = localStorage.getItem(sharedStorageKey(sharedState.username));
+    if (!raw) {
+      sharedState.ownRanking = [];
+      sharedState.hasOwnRanking = false;
+      return;
+    }
+
+    const parsed = JSON.parse(raw);
+    sharedState.ownRanking = sanitizeRanking(parsed.ranking);
+    sharedState.hasOwnRanking = true;
+  } catch {
+    sharedState.ownRanking = [];
+    sharedState.hasOwnRanking = false;
+  }
+}
+
+function setOwnRanking(ranking, source = 'local') {
+  const nextRanking = sanitizeRanking(ranking);
+  sharedState.ownRanking = nextRanking;
+  sharedState.hasOwnRanking = true;
+
+  if (sharedState.username) {
+    sharedState.rankingsByUser[sharedState.username] = nextRanking.slice();
+  }
+
+  if (source !== 'remote') {
+    saveSharedOwnRanking();
+  }
+}
+
+async function resubmitOwnRankingIfNeeded() {
+  if (!sharedState.enabled || !sharedState.username || !sharedState.hasOwnRanking) return;
+  await persistOwnRanking(sharedState.ownRanking);
 }
 
 function getCombinedOrder() {
@@ -412,7 +487,7 @@ function initSharedSortable() {
   const onDragEnd = () => {
     sharedState.dragging = false;
     const ranking = syncOwnRankingFromDom();
-    sharedState.rankingsByUser[sharedState.username] = ranking;
+    setOwnRanking(ranking);
     sharedState.localUnranked = syncLocalUnrankedFromDom();
     normalizeLocalUnranked();
     persistOwnRanking(ranking);
@@ -461,6 +536,12 @@ function applySharedSnapshot(payload) {
     }
   }
 
+  if (sharedState.hasOwnRanking && sharedState.username) {
+    sharedState.rankingsByUser[sharedState.username] = sharedState.ownRanking.slice();
+  } else if (sharedState.username) {
+    sharedState.ownRanking = sanitizeRanking(sharedState.rankingsByUser[sharedState.username] || []);
+  }
+
   renderShared();
 }
 
@@ -471,6 +552,7 @@ async function fetchSharedRankings() {
   if (!response.ok) return;
   const payload = await response.json();
   applySharedSnapshot(payload);
+  await resubmitOwnRankingIfNeeded();
 }
 
 function connectSharedSocket() {
@@ -518,6 +600,10 @@ async function tryEnableSharedMode() {
     sharedState.rankingsByUser = {};
     for (const user of sharedState.users) {
       sharedState.rankingsByUser[user] = [];
+    }
+    loadSharedOwnRanking();
+    if (sharedState.hasOwnRanking) {
+      sharedState.rankingsByUser[sharedState.username] = sharedState.ownRanking.slice();
     }
     sharedState.localUnranked = allKnownSongIds();
 
