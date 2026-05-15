@@ -23,4 +23,7 @@ COPY ./ /app
 
 RUN npm ci --omit=dev
 
+RUN apk add --no-cache curl \
+    && npm ci
+
 CMD ["npm", "run", "start"]
