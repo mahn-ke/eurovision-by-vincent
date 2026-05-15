@@ -16,7 +16,7 @@ async function expectUniqueSongTitles(page) {
 
 test.describe('suite no state', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?pollMs=1000');
     await page.evaluate(() => {
       localStorage.clear();
     });
@@ -51,7 +51,7 @@ test.describe('suite no state', () => {
     ]);
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(3, {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expect(page.locator('#notRankedList')).toContainText('Three');
     await expectUniqueSongTitles(page);

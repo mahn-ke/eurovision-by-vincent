@@ -86,7 +86,7 @@ async function dropIntoList(heldDrag) {
 
 test.describe('suite with state', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?pollMs=1000');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
   });
@@ -99,7 +99,7 @@ test.describe('suite with state', () => {
 
     await page.reload();
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(2, {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expect(page.locator('#rankedList .song-item')).toHaveCount(0);
     await expectUniqueSongTitles(page);
@@ -116,7 +116,7 @@ test.describe('suite with state', () => {
     ]);
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(2, {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expect(page.locator('#notRankedList')).toContainText('Song C');
     await expectUniqueSongTitles(page);
@@ -132,7 +132,7 @@ test.describe('suite with state', () => {
     ]);
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(6, {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expectUniqueSongTitles(page);
 
@@ -170,7 +170,7 @@ test.describe('suite with state', () => {
     ]);
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(6, {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expect(page.locator('#notRankedList')).toContainText('Song H');
     await expect(page.locator('#notRankedList')).toContainText('Song I');
@@ -186,7 +186,7 @@ test.describe('suite with state', () => {
 
     await page.reload();
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(3, {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expectUniqueSongTitles(page);
 
@@ -199,9 +199,9 @@ test.describe('suite with state', () => {
       { artist: 'Delta', title: 'Song D', country: 'IT' },
     ]);
 
-    await holdDraggedSong(heldDrag, 3_000);
+    await holdDraggedSong(heldDrag, 2_000);
     await expect(page.locator('#notRankedList')).toContainText('Song D', {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expectUniqueSongTitles(page);
 
@@ -220,7 +220,7 @@ test.describe('suite with state', () => {
 
     await page.reload();
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(3, {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expectUniqueSongTitles(page);
 
@@ -233,9 +233,9 @@ test.describe('suite with state', () => {
       { artist: 'Delta', title: 'Song D', country: 'IT' },
     ]);
 
-    await holdDraggedSong(heldDrag, 3_000);
+    await holdDraggedSong(heldDrag, 2_000);
     await expect(page.locator('#notRankedList')).toContainText('Song D', {
-      timeout: 3_000,
+      timeout: 2_000,
     });
     await expect.poll(async () => getTitleCount(page, 'Song D')).toBe(1);
     await expectUniqueSongTitles(page);

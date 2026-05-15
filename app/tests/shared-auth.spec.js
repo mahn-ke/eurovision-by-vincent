@@ -14,7 +14,7 @@ async function firstTwoTitles(page, panelSelector) {
 
 test.describe('shared auth ranking', () => {
   test('invalid token keeps anonymous two-column behavior', async ({ page }) => {
-    await page.goto('/?token=does-not-exist');
+    await page.goto('/?token=does-not-exist&pollMs=1000');
 
     await expect(page.locator('#rankedList')).toBeVisible();
     await expect(page.locator('#notRankedList')).toBeVisible();
@@ -22,7 +22,7 @@ test.describe('shared auth ranking', () => {
   });
 
   test('valid token shows own column first and keeps others read-only', async ({ page }) => {
-    await page.goto('/?token=abc');
+    await page.goto('/?token=abc&pollMs=1000');
 
     await expect(page.locator('[data-user-panel]')).toHaveCount(3);
 
@@ -45,8 +45,8 @@ test.describe('shared auth ranking', () => {
     const alicePage = await browser.newPage();
     const bobPage = await browser.newPage();
 
-    await alicePage.goto('/?token=abc');
-    await bobPage.goto('/?token=def');
+    await alicePage.goto('/?token=abc&pollMs=1000');
+    await bobPage.goto('/?token=def&pollMs=1000');
 
     await expect(alicePage.locator('[data-user-panel]')).toHaveCount(3);
     await expect(bobPage.locator('[data-user-panel]')).toHaveCount(3);

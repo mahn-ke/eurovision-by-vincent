@@ -146,4 +146,5 @@ vite.config.ts.timestamp-*
 .DS_Store
 
 playwright-export/*
+playwright-report/*
 test-results/*

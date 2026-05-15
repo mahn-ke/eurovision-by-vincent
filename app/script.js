@@ -1,6 +1,15 @@
 const STORAGE_KEY = 'eurovision-ranking-state-v1';
-const POLL_MS = 2_000;
-const QUERY_TOKEN = new URLSearchParams(window.location.search).get('token') || '';
+const DEFAULT_POLL_MS = 20_000;
+const QUERY_PARAMS = new URLSearchParams(window.location.search);
+const QUERY_TOKEN = QUERY_PARAMS.get('token') || '';
+
+function resolvePollMs() {
+  const overrideValue = Number.parseInt(QUERY_PARAMS.get('pollMs') || '', 10);
+  if (!Number.isFinite(overrideValue)) return DEFAULT_POLL_MS;
+  return Math.max(250, overrideValue);
+}
+
+const POLL_MS = resolvePollMs();
 
 const rankedListEl = document.getElementById('rankedList');
 const notRankedListEl = document.getElementById('notRankedList');
