@@ -22,5 +22,8 @@ module.exports = defineConfig({
     port: 3001,
     reuseExistingServer: true,
     timeout: 120_000,
+    env: {
+      TOKENS: 'YWxpY2U6YWJjLGJvYjpkZWYsw7xzZXJuw6TDn2U6Z2hp',
+    },
   },
 });

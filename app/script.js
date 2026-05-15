@@ -1,10 +1,12 @@
 const STORAGE_KEY = 'eurovision-ranking-state-v1';
 const POLL_MS = 2_000;
+const QUERY_TOKEN = new URLSearchParams(window.location.search).get('token') || '';
 
 const rankedListEl = document.getElementById('rankedList');
 const notRankedListEl = document.getElementById('notRankedList');
 const songTemplate = document.getElementById('songTemplate');
 const emptyStateEl = document.getElementById('emptyState');
+const columnsEl = document.querySelector('.columns');
 
 const state = {
   songsById: {},
@@ -16,6 +18,18 @@ let sortablesInitialized = false;
 const dragState = {
   active: false,
   songId: null,
+};
+
+const sharedState = {
+  enabled: false,
+  username: null,
+  users: [],
+  rankingsByUser: {},
+  socket: null,
+  shellSignature: '',
+  listByUser: new Map(),
+  sortableInitialized: false,
+  dragging: false,
 };
 
 function toSongId(song) {
@@ -31,6 +45,19 @@ function normalizeSong(raw) {
   const country = String(raw.country || '').trim().toUpperCase();
   const id = toSongId({ artist, title, country });
   return { id, artist, title, country };
+}
+
+function baseSongOrder() {
+  const seen = new Set();
+  const ordered = [];
+
+  for (const id of [...state.ranked, ...state.notRanked]) {
+    if (!state.songsById[id] || seen.has(id)) continue;
+    seen.add(id);
+    ordered.push(id);
+  }
+
+  return ordered;
 }
 
 function saveState() {
@@ -82,10 +109,16 @@ function mergeSongs(songs) {
 }
 
 function songElement(songId) {
+  return songElementWithDrag(songId, true);
+}
+
+function songElementWithDrag(songId, isDraggable) {
   const song = state.songsById[songId];
   const fragment = songTemplate.content.cloneNode(true);
   const li = fragment.querySelector('.song-item');
   li.dataset.songId = songId;
+  li.setAttribute('draggable', isDraggable ? 'true' : 'false');
+  if (!isDraggable) li.classList.add('read-only-item');
   li.querySelector('.country-pill span').textContent = song.country;
   li.querySelector('.song-title').textContent = song.title;
   li.querySelector('.song-artist').textContent = song.artist;
@@ -141,6 +174,11 @@ function updateEmptyState() {
 }
 
 function render() {
+  if (sharedState.enabled) {
+    renderShared();
+    return;
+  }
+
   if (dragState.active) {
     renderWhileDragging();
     return;
@@ -160,6 +198,228 @@ function render() {
   updateEmptyState();
   initSortableHandlers();
   saveState();
+}
+
+function arrangeUsers(users, ownUsername) {
+  const filtered = Array.isArray(users) ? users.filter((name) => typeof name === 'string' && name) : [];
+  if (!ownUsername || !filtered.includes(ownUsername)) return filtered;
+  return [ownUsername, ...filtered.filter((name) => name !== ownUsername)];
+}
+
+function ensureSharedShell() {
+  if (!columnsEl) return;
+
+  const signature = `${sharedState.username || ''}::${sharedState.users.join('|')}`;
+  if (sharedState.shellSignature === signature) return;
+
+  columnsEl.innerHTML = '';
+  sharedState.listByUser = new Map();
+
+  for (const username of sharedState.users) {
+    const isOwn = username === sharedState.username;
+
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.dataset.userPanel = 'true';
+    panel.dataset.username = username;
+    panel.dataset.editable = isOwn ? 'true' : 'false';
+
+    const title = document.createElement('h2');
+    title.textContent = isOwn ? `${username} (you)` : username;
+
+    const list = document.createElement('ul');
+    list.className = 'song-list';
+    list.setAttribute('aria-label', `${username} ranking`);
+    list.dataset.userList = 'true';
+    list.dataset.username = username;
+
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = isOwn
+      ? 'Reorder your ranking. Changes are shared live.'
+      : 'Live view. This ranking updates from the server.';
+
+    panel.appendChild(title);
+    panel.appendChild(list);
+    panel.appendChild(hint);
+
+    columnsEl.appendChild(panel);
+    sharedState.listByUser.set(username, list);
+  }
+
+  sharedState.sortableInitialized = false;
+  sharedState.shellSignature = signature;
+}
+
+function getUserRanking(user) {
+  const raw = Array.isArray(sharedState.rankingsByUser[user]) ? sharedState.rankingsByUser[user] : [];
+  const valid = raw.filter((songId) => Boolean(songId && state.songsById[songId]));
+  const used = new Set(valid);
+  const order = valid.slice();
+
+  for (const songId of baseSongOrder()) {
+    if (used.has(songId)) continue;
+    used.add(songId);
+    order.push(songId);
+  }
+
+  return order;
+}
+
+function renderShared() {
+  ensureSharedShell();
+  if (sharedState.dragging) return;
+
+  for (const user of sharedState.users) {
+    const list = sharedState.listByUser.get(user);
+    if (!list) continue;
+
+    const isOwn = user === sharedState.username;
+    list.innerHTML = '';
+
+    for (const songId of getUserRanking(user)) {
+      list.appendChild(songElementWithDrag(songId, isOwn));
+    }
+  }
+
+  if (emptyStateEl) {
+    emptyStateEl.hidden = baseSongOrder().length > 0;
+  }
+
+  initSharedSortable();
+}
+
+function syncOwnRankingFromDom() {
+  const ownList = sharedState.listByUser.get(sharedState.username);
+  if (!ownList) return [];
+  return [...ownList.querySelectorAll('.song-item')]
+    .map((item) => item.dataset.songId)
+    .filter((songId) => Boolean(songId && state.songsById[songId]));
+}
+
+async function persistOwnRanking(ranking) {
+  try {
+    await fetch(`/api/rankings?token=${encodeURIComponent(QUERY_TOKEN)}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify({ ranking }),
+    });
+  } catch (error) {
+    console.error(`Could not persist ranking: ${error.message}`);
+  }
+}
+
+function initSharedSortable() {
+  if (sharedState.sortableInitialized) return;
+  const ownList = sharedState.listByUser.get(sharedState.username);
+  if (!ownList) return;
+
+  Sortable.create(ownList, {
+    animation: 150,
+    onStart: () => {
+      sharedState.dragging = true;
+    },
+    onEnd: () => {
+      sharedState.dragging = false;
+      const ranking = syncOwnRankingFromDom();
+      sharedState.rankingsByUser[sharedState.username] = ranking;
+      persistOwnRanking(ranking);
+      renderShared();
+    },
+  });
+
+  sharedState.sortableInitialized = true;
+}
+
+function applySharedSnapshot(payload) {
+  if (!payload || typeof payload !== 'object') return;
+  const users = arrangeUsers(payload.users, sharedState.username);
+  if (users.length > 0) {
+    sharedState.users = users;
+  }
+
+  if (payload.rankings && typeof payload.rankings === 'object') {
+    const nextRankings = {};
+    for (const user of sharedState.users) {
+      nextRankings[user] = Array.isArray(payload.rankings[user]) ? payload.rankings[user].slice() : [];
+    }
+    sharedState.rankingsByUser = nextRankings;
+  }
+
+  for (const user of sharedState.users) {
+    if (!Array.isArray(sharedState.rankingsByUser[user])) {
+      sharedState.rankingsByUser[user] = [];
+    }
+  }
+
+  renderShared();
+}
+
+async function fetchSharedRankings() {
+  const response = await fetch(`/api/rankings?token=${encodeURIComponent(QUERY_TOKEN)}`, {
+    cache: 'no-store',
+  });
+  if (!response.ok) return;
+  const payload = await response.json();
+  applySharedSnapshot(payload);
+}
+
+function connectSharedSocket() {
+  if (!QUERY_TOKEN) return;
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(QUERY_TOKEN)}`;
+  const socket = new WebSocket(url);
+
+  socket.addEventListener('message', (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      if (payload.type === 'rankings') {
+        applySharedSnapshot(payload);
+      }
+    } catch {
+      // Ignore malformed messages.
+    }
+  });
+
+  socket.addEventListener('close', () => {
+    if (sharedState.enabled) {
+      window.setTimeout(connectSharedSocket, 1_500);
+    }
+  });
+
+  sharedState.socket = socket;
+}
+
+async function tryEnableSharedMode() {
+  if (!QUERY_TOKEN) return false;
+
+  try {
+    const response = await fetch(`/api/auth?token=${encodeURIComponent(QUERY_TOKEN)}`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) return false;
+
+    const payload = await response.json();
+    if (!payload.authenticated || !payload.username) return false;
+
+    sharedState.enabled = true;
+    sharedState.username = payload.username;
+    sharedState.users = arrangeUsers(payload.users, payload.username);
+    sharedState.rankingsByUser = {};
+    for (const user of sharedState.users) {
+      sharedState.rankingsByUser[user] = [];
+    }
+
+    renderShared();
+    await fetchSharedRankings();
+    connectSharedSocket();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function listSongIds(container) {
@@ -233,14 +493,24 @@ async function fetchSongs() {
       : [];
 
     mergeSongs(songs);
-    render();
+
+    if (sharedState.enabled) {
+      renderShared();
+    } else {
+      render();
+    }
   } catch (error) {
     console.error(`Could not load songs: ${error.message}`);
   }
 }
 
-function start() {
-  loadState();
+async function start() {
+  const sharedEnabled = await tryEnableSharedMode();
+
+  if (!sharedEnabled) {
+    loadState();
+  }
+
   fetchSongs();
   setInterval(fetchSongs, POLL_MS);
 }

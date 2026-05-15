@@ -89,7 +89,7 @@ body {
   margin-top: 1.5rem;
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .panel {
@@ -130,6 +130,11 @@ body {
   margin-bottom: 0.5rem;
   background: var(--surface-alt);
   cursor: grab;
+}
+
+.panel[data-editable="false"] .song-item,
+.song-item.read-only-item {
+  cursor: default;
 }
 
 .song-item:last-child {

@@ -11,6 +11,7 @@
     "@playwright/test": "^1.54.2"
   },
   "dependencies": {
-    "sortablejs": "^1.15.7"
+    "sortablejs": "^1.15.7",
+    "ws": "^8.20.1"
   }
 }
