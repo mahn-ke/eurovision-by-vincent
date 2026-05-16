@@ -7,31 +7,6 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <label for="invertColor">
-      <img class="white" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLW1vb24taWNvbiBsdWNpZGUtbW9vbiI+PHBhdGggZD0iTTIwLjk4NSAxMi40ODZhOSA5IDAgMSAxLTkuNDczLTkuNDcyYy40MDUtLjAyMi42MTcuNDYuNDAyLjgwM2E2IDYgMCAwIDAgOC4yNjggOC4yNjhjLjM0NC0uMjE1LjgyNS0uMDA0LjgwMy40MDEiLz48L3N2Zz4="/></label>
-    <input type="checkbox" id="invertColor" name="invertColor" style="display: none;" />
-    <script>
-      const invertCheckbox = document.getElementById('invertColor');
-      const htmlEl = document.documentElement;
-
-      // Load saved preference
-      const savedPreference = localStorage.getItem('invertColor') === 'true';
-      invertCheckbox.checked = savedPreference;
-      if (savedPreference) {
-        htmlEl.classList.add('invert');
-      }
-
-      // Toggle class and save preference on change
-      invertCheckbox.addEventListener('change', () => {
-        if (invertCheckbox.checked) {
-          htmlEl.classList.add('invert');
-          localStorage.setItem('invertColor', 'true');
-        } else {
-          htmlEl.classList.remove('invert');
-          localStorage.setItem('invertColor', 'false');
-        }
-      });
-    </script>
     <main class="app">
       <header class="hero">
         <h1>Eurovision Live-Rangliste</h1>
