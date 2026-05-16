@@ -130,6 +130,7 @@ header {
 }
 
 .song-item {
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -201,5 +202,49 @@ header {
 
   .song-list {
     min-height: 200px;
+  }
+}
+
+.media {
+  margin-left: auto;
+  font-size: 0;
+  margin-top: -13px;
+  margin-bottom: -12px;
+  margin-right: -11px;
+}
+.media img {
+  filter: inherit;
+  height: 65px;
+  vertical-align: middle;
+  margin-top: -0.65em;
+  margin-bottom: -0.65em;
+  padding: 15px;
+}
+
+.spotify {
+  background-color: rgba(30, 215, 96, 0.8);
+}
+
+.youtube {
+  background-color: rgba(255, 0, 0, 0.8);
+}
+
+@media (prefers-color-scheme: light) {
+  .spotify {
+    background-color: rgba(30, 215, 96, 0.8);
+  }
+
+  .youtube {
+    background-color: rgba(255, 0, 0, 0.8);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .spotify {
+    background-color: rgb(188 255 212 / 80%);
+  }
+
+  .youtube {
+    background-color: rgb(255 220 220 / 80%);
   }
 }

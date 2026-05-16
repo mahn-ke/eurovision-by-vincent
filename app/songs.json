@@ -1,47 +1,177 @@
 [
     {
-      "artist": "Alpha",
-      "title": "Lied A",
-      "country": "🇩🇪"
+      "artist": "Søren Torpegaard Lund",
+      "title": "Før Vi Går Hjem",
+      "country": "🇩🇰",
+      "spotify": "https://open.spotify.com/track/2qG6vr8fMq2abvKu7qXVuQ?si=c45b01ad58814749",
+      "youtube": "https://www.youtube.com/watch?v=xKzEP9dwoss"
     },
     {
-      "artist": "Beta",
-      "title": "Lied B",
-      "country": "🇬🇧"
+      "artist": "Sarah Engels",
+      "title": "Fire",
+      "country": "🇩🇪",
+      "spotify": "https://open.spotify.com/track/2j5D20BxsN7xl11KcnLyHP?si=673613210d874de5",
+      "youtube": "https://www.youtube.com/watch?v=AzvRc3eH_rA"
     },
     {
-      "artist": "Gamma",
-      "title": "Lied C",
-      "country": "🇸🇪"
+      "artist": "Noam Bettan",
+      "title": "Michelle",
+      "country": "🇮🇱",
+      "spotify": "https://open.spotify.com/track/22g4vKHFze17AV7vnequhG?si=74f13b5f2a3d4d43",
+      "youtube": "https://www.youtube.com/watch?v=xWCnWSoG8nI"
     },
     {
-      "artist": "Delta",
-      "title": "Lied D",
-      "country": "🇮🇹"
+      "artist": "ESSYLA",
+      "title": "Dancing on the Ice",
+      "country": "🇧🇪",
+      "spotify": "https://open.spotify.com/track/1u0WYHtNFrAyzgybCDK861?si=e22335dbc4a84b82",
+      "youtube": "https://www.youtube.com/watch?v=9sfI4g6DWTU"
     },
     {
-      "artist": "Epsilon",
-      "title": "Lied E",
-      "country": "🇳🇴"
+      "artist": "Alis",
+      "title": "Nân",
+      "country": "🇦🇱",
+      "spotify": "https://open.spotify.com/track/40vsOMljwhHCibpToRULGo?si=45e0150d8cd84a88",
+      "youtube": "https://www.youtube.com/watch?v=b9AdRrA554o"
     },
     {
-      "artist": "Zeta",
-      "title": "Lied F",
-      "country": "🇫🇮"
+      "artist": "Akylas",
+      "title": "Ferto",
+      "country": "🇬🇷",
+      "spotify": "https://open.spotify.com/track/0LStLUCQgbv6WIEO2fFAO5?si=61ba0245def344c5",
+      "youtube": "https://www.youtube.com/watch?v=NGwNTd_DA9s"
     },
     {
-      "artist": "Eta",
-      "title": "Lied G",
-      "country": "🇨🇭"
+      "artist": "LELÉKA",
+      "title": "Ridnym",
+      "country": "🇺🇦",
+      "spotify": "https://open.spotify.com/track/44DemLB8ChS8AaN9haWsgU?si=c18d2dbbf3484c0c",
+      "youtube": "https://www.youtube.com/watch?v=SoEXezpblAc"
     },
     {
-      "artist": "Test",
-      "title": "Lied H",
-      "country": "🇦🇹"
+      "artist": "Delta Goodrem",
+      "title": "Eclipse",
+      "country": "🇦🇺",
+      "spotify": "https://open.spotify.com/track/268EdGlIxScwdC21kE89Nf?si=f87387b224bc4a2d",
+      "youtube": "https://www.youtube.com/watch?v=EUMCr1pnaMY"
     },
     {
-      "artist": "Theta",
-      "title": "Lied I",
-      "country": "🇩🇰"
+      "artist": "LAVINA",
+      "title": "Kraj Mene",
+      "country": "🇷🇸",
+      "spotify": "https://open.spotify.com/track/3cnVAUGWZcXNqojO8PfYOu?si=709fe82680f14b06",
+      "youtube": "https://www.youtube.com/watch?v=FJTLKBOOE98"
+    },
+    {
+      "artist": "AIDAN",
+      "title": "Bella",
+      "country": "🇲🇹",
+      "spotify": "https://open.spotify.com/track/6xMZVKtQ76THTiJBntzmwz?si=23e484879ac942f7",
+      "youtube": "https://www.youtube.com/watch?v=CW6mQLBh6Js"
+    },
+    {
+      "artist": "Daniel Zizka",
+      "title": "CROSSROADS",
+      "country": "🇨🇿",
+      "spotify": "https://open.spotify.com/track/3X6cfvG2xgtx47V03hKxjG?si=86b6883fa87c48f1",
+      "youtube": "https://www.youtube.com/watch?v=6ea25aRGpLo"
+    },
+    {
+      "artist": "DARA",
+      "title": "Bangaranga",
+      "country": "🇧🇬",
+      "spotify": "https://open.spotify.com/track/6SvlfrQYzUsW5UQUpUpy26?si=361d4816a3e24ccc",
+      "youtube": "https://www.youtube.com/watch?v=J3oGYo_mekw"
+    },
+    {
+      "artist": "LELEK",
+      "title": "Andromeda",
+      "country": "🇭🇷",
+      "spotify": "https://open.spotify.com/track/3bTsAnErZrtBoUfORcTDTo?si=ba21b6f53fd94493",
+      "youtube": "https://www.youtube.com/watch?v=vl7Jqnw10sU"
+    },
+    {
+      "artist": "LOOK MUM NO COMPUTER",
+      "title": "Eins, Zwei, Drei",
+      "country": "🇬🇧",
+      "spotify": "https://open.spotify.com/track/26xlJAlQoCMbnAWd0sGCQf?si=c1bbbdc9aede4948",
+      "youtube": "https://www.youtube.com/watch?v=niMKvJ-Itq8"
+    },
+    {
+      "artist": "Monroe",
+      "title": "Regarde !",
+      "country": "🇫🇷",
+      "spotify": "https://open.spotify.com/track/6cjjQg0SAlX7ahvYWuRPXz?si=add4c34c4c4f4922",
+      "youtube": "https://www.youtube.com/watch?v=ujoCYrvvTYQ"
+    },
+    {
+      "artist": "Satoshi",
+      "title": "Viva, Moldova!",
+      "country": "🇲🇩",
+      "spotify": "https://open.spotify.com/track/3slA6oMqkypLVUkEjk2xfQ?si=8676785c9dd94d7f",
+      "youtube": "https://www.youtube.com/watch?v=SViojHjNSzc"
+    },
+    {
+      "artist": "Linda Lampenius x Pete Parkkonen",
+      "title": "Liekinheitin",
+      "country": "🇫🇮",
+      "spotify": "https://open.spotify.com/track/0k2NxIVax5tnGSCeruFyEL?si=e254e776c2c14475",
+      "youtube": "https://www.youtube.com/watch?v=9bfwNIYb96Q"
+    },
+    {
+      "artist": "ALICJA",
+      "title": "Pray",
+      "country": "🇵🇱",
+      "spotify": "https://open.spotify.com/track/4SbMcQYjfmirlObF27nXtf?si=d4aec822a44e4741",
+      "youtube": "https://www.youtube.com/watch?v=q78cnYIoF9Y"
+    },
+    {
+      "artist": "Lion Ceccah",
+      "title": "Sólo Quiero Más",
+      "country": "🇱🇹",
+      "spotify": "https://open.spotify.com/track/1av4wp2KoCwn9P151n45WV?si=066bc26d8d9c419e",
+      "youtube": "https://www.youtube.com/watch?v=0H-PXnbhG7A"
+    },
+    {
+      "artist": "FELICIA",
+      "title": "My System",
+      "country": "🇸🇪",
+      "spotify": "https://open.spotify.com/track/1XmLPHkuv95o5NUodggzfv?si=fffad0945a674e59",
+      "youtube": "https://www.youtube.com/watch?v=ibbfS8iG450"
+    },
+    {
+      "artist": "Antigoni",
+      "title": "JALLA",
+      "country": "🇨🇾",
+      "spotify": "https://open.spotify.com/track/1h2xmg6pH7r5pr2prKmWGc?si=52e3f0e3a152488d",
+      "youtube": "https://www.youtube.com/watch?v=TzSs51BiQrE"
+    },
+    {
+      "artist": "Sal Da Vinci",
+      "title": "Per Sempre Sì",
+      "country": "🇮🇹",
+      "spotify": "https://open.spotify.com/track/5W1mx7Oeg2HxmASrth1nTt?si=4577c885d0bd4332",
+      "youtube": "https://www.youtube.com/watch?v=V406FAGkhyQ"
+    },
+    {
+      "artist": "JONAS LOVV",
+      "title": "YA YA YA",
+      "country": "🇳🇴",
+      "spotify": "https://open.spotify.com/track/0BDJRKqx8Qj6EmM5o9P5Vr?si=92bbf6d9737a4797",
+      "youtube": "https://www.youtube.com/watch?v=MasllzWk_bQ"
+    },
+    {
+      "artist": "Alexandra Căpitănescu",
+      "title": "Choke Me",
+      "country": "🇷🇴",
+      "spotify": "https://open.spotify.com/track/0itI8ykSUDp4dfwiHY6fnw?si=e697d90f77c741fd",
+      "youtube": "https://www.youtube.com/watch?v=yn0YmI0dPb8"
+    },
+    {
+      "artist": "COSMÓ",
+      "title": "Tanzschein",
+      "country": "🇦🇹",
+      "spotify": "https://open.spotify.com/track/6P4wvzxJJZR7cVs1kFXL3q?si=691f411c78df4820",
+      "youtube": "https://www.youtube.com/watch?v=zPGP9ZphxiY"
     }
 ]

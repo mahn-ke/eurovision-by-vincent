@@ -61,8 +61,10 @@ function normalizeSong(raw) {
   const artist = String(raw.artist || raw.arist || '').trim();
   const title = String(raw.title || '').trim();
   const country = String(raw.country || '').trim().toUpperCase();
+  const youtube = String(raw.youtube || '').trim();
+  const spotify = String(raw.spotify || '').trim();
   const id = toSongId({ artist, title, country });
-  return { id, artist, title, country };
+  return { id, artist, title, country, youtube, spotify };
 }
 
 function sanitizeRanking(ranking) {
@@ -208,6 +210,8 @@ function songElementWithDrag(songId, isDraggable) {
   li.querySelector('.country-pill span').textContent = song.country;
   li.querySelector('.song-title').textContent = song.title;
   li.querySelector('.song-artist').textContent = song.artist;
+  li.querySelector('.link-youtube').href = song.youtube;
+  li.querySelector('.link-spotify').href = song.spotify;
   return li;
 }
 
