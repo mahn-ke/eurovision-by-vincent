@@ -245,4 +245,54 @@ test.describe('suite with state', () => {
     await expect.poll(async () => getTitleCount(page, 'Lied B')).toBe(1);
     await expectUniqueSongTitles(page);
   });
+
+  test('same-list drop keeps existing flag image nodes stable', async ({ page }) => {
+    await installSongsMock(page, [
+      { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+      { artist: 'Beta', title: 'Lied B', country: 'GB' },
+      { artist: 'Gamma', title: 'Lied C', country: 'SE' },
+    ]);
+
+    await page.reload();
+    await expect(page.locator('#notRankedList .song-item')).toHaveCount(3, {
+      timeout: 2_000,
+    });
+
+    const orderBeforeDrop = await page.locator('#notRankedList .song-title').allTextContents();
+
+    const betaFlagBefore = await page
+      .locator('#notRankedList .song-item', { hasText: 'Lied B' })
+      .locator('img.flag')
+      .first()
+      .elementHandle();
+
+    expect(betaFlagBefore).not.toBeNull();
+
+    await dragSongBeforeSong(page, 'Lied C', 'Lied B');
+    let orderAfterDrop = await page.locator('#notRankedList .song-title').allTextContents();
+
+    // Some browsers can interpret the first drop geometry as a no-op.
+    // Try the opposite direction to still validate same-list drop behavior.
+    if (orderAfterDrop.join('|') === orderBeforeDrop.join('|')) {
+      await dragSongBeforeSong(page, 'Lied B', 'Lied C');
+      orderAfterDrop = await page.locator('#notRankedList .song-title').allTextContents();
+    }
+
+    expect(orderAfterDrop.join('|')).not.toBe(orderBeforeDrop.join('|'));
+
+    const betaFlagAfter = await page
+      .locator('#notRankedList .song-item', { hasText: 'Lied B' })
+      .locator('img.flag')
+      .first()
+      .elementHandle();
+
+    expect(betaFlagAfter).not.toBeNull();
+
+    const sameNode = await page.evaluate(
+      ([before, after]) => before === after,
+      [betaFlagBefore, betaFlagAfter],
+    );
+
+    expect(sameNode).toBe(true);
+  });
 });
