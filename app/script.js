@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'eurovision-ranking-state-v1';
 const SHARED_STORAGE_KEY_PREFIX = 'eurovision-shared-ranking-state-v1';
-const DEFAULT_POLL_MS = 20_000;
+const DEFAULT_POLL_MS = 2_000;
 const QUERY_PARAMS = new URLSearchParams(window.location.search);
 const QUERY_TOKEN = QUERY_PARAMS.get('token') || '';
 

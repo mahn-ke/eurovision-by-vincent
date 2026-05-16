@@ -1,9 +1,20 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const { test, expect } = require('@playwright/test');
+const { installSongsMock } = require('./helpers/songs-mock');
 
 const APP_DIR = path.resolve(__dirname, '..');
 const TEST_TOKENS = 'YWxpY2U6YWJjLGJvYjpkZWYsw7xzZXJuw6TDn2U6Z2hp';
+const SHARED_SONGS = [
+  { artist: 'Alpha', title: 'Lied A', country: 'DE' },
+  { artist: 'Beta', title: 'Lied B', country: 'GB' },
+  { artist: 'Gamma', title: 'Lied C', country: 'SE' },
+  { artist: 'Delta', title: 'Lied D', country: 'IT' },
+  { artist: 'Epsilon', title: 'Lied E', country: 'NO' },
+  { artist: 'Zeta', title: 'Lied F', country: 'FI' },
+  { artist: 'Eta', title: 'Lied G', country: 'CH' },
+  { artist: 'Theta', title: 'Lied H', country: 'ES' },
+];
 
 function testBaseUrl(port) {
   return `http://127.0.0.1:${port}`;
@@ -75,6 +86,7 @@ async function panelSongCount(page, panelSelector) {
 
 test.describe('shared auth ranking', () => {
   test('invalid token keeps anonymous two-column behavior', async ({ page }) => {
+    await installSongsMock(page, SHARED_SONGS);
     await page.goto('/?token=does-not-exist&pollMs=1000');
 
     await expect(page.locator('#rankedList')).toBeVisible();
@@ -83,6 +95,7 @@ test.describe('shared auth ranking', () => {
   });
 
   test('valid token shows own column first and keeps others read-only', async ({ page }) => {
+    await installSongsMock(page, SHARED_SONGS);
     await page.goto('/?token=abc&pollMs=1000');
 
     await expect(page.locator('[data-panel-role="unranked"]')).toHaveCount(1);
@@ -117,6 +130,9 @@ test.describe('shared auth ranking', () => {
   test('own ranking updates are broadcast while unranked stays local per client', async ({ browser }) => {
     const alicePage = await browser.newPage();
     const bobPage = await browser.newPage();
+
+    await installSongsMock(alicePage, SHARED_SONGS);
+    await installSongsMock(bobPage, SHARED_SONGS);
 
     await alicePage.goto('/?token=abc&pollMs=1000');
     await bobPage.goto('/?token=def&pollMs=1000');
