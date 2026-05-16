@@ -629,6 +629,43 @@ function findLocalSourceSongElement(songId) {
   return getSongElementFromList(sharedState.unrankedListEl, songId);
 }
 
+function preComputeIntroTargetRect(user, songId, index) {
+  // Called BEFORE renderSongList so element positions are not yet affected by Sortable's
+  // FLIP animation transforms. songId is not yet in the remote user's list at this point.
+  const list = sharedState.listByUser.get(user);
+  if (!list) return null;
+
+  const ranking = getRankedOnlyForUser(user);
+  const previousId = index > 0 ? ranking[index - 1] : null;
+  const nextId = index < ranking.length - 1 ? ranking[index + 1] : null;
+  const previousEl = previousId ? getSongElementFromList(list, previousId) : null;
+  const nextEl = nextId ? getSongElementFromList(list, nextId) : null;
+
+  const referenceEl = previousEl || nextEl;
+  if (!referenceEl) return null;
+
+  const style = window.getComputedStyle(referenceEl);
+  const gap = Number.parseFloat(style.marginBottom) || 0;
+  const referenceRect = referenceEl.getBoundingClientRect();
+
+  if (previousEl) {
+    return {
+      left: referenceRect.left,
+      top: referenceRect.bottom + gap,
+      width: referenceRect.width,
+      height: referenceRect.height,
+    };
+  }
+
+  // No previous element: newSong goes before nextEl, which currently holds the target slot.
+  return {
+    left: referenceRect.left,
+    top: referenceRect.top,
+    width: referenceRect.width,
+    height: referenceRect.height,
+  };
+}
+
 function computeIntroTargetRect(user, songId, index, targetEl) {
   const fallback = targetEl.getBoundingClientRect();
   const list = sharedState.listByUser.get(user);
@@ -676,7 +713,7 @@ function placeSongAtRankingIndex(user, songId, index) {
   list.insertBefore(target, nextEl || null);
 }
 
-function animateRemoteSongIntroduction(user, songId, index) {
+function animateRemoteSongIntroduction(user, songId, index, preComputedTargetRect) {
   const prefersReducedMotion = typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (prefersReducedMotion) return false;
@@ -687,7 +724,7 @@ function animateRemoteSongIntroduction(user, songId, index) {
   if (!source || !target) return false;
 
   const sourceRect = source.getBoundingClientRect();
-  const targetRect = computeIntroTargetRect(user, songId, index, target);
+  const targetRect = preComputedTargetRect || computeIntroTargetRect(user, songId, index, target);
   if (!sourceRect.width || !sourceRect.height || !targetRect.width || !targetRect.height) return false;
 
   target.classList.add('remote-intro-target-hidden');
@@ -747,7 +784,7 @@ function runPendingRemoteIntroAnimations() {
 
   for (const entry of entries) {
     try {
-      animateRemoteSongIntroduction(entry.user, entry.songId, entry.index);
+      animateRemoteSongIntroduction(entry.user, entry.songId, entry.index, entry.preComputedTargetRect);
     } catch {
       // Animation failures must never interrupt shared-mode rendering.
     }
@@ -759,6 +796,12 @@ function renderShared(reuseNodes = false) {
   if (sharedState.dragging) return;
 
   normalizeLocalUnranked();
+
+  // Pre-compute intro animation target rects before renderSongList runs, so we read
+  // element positions before Sortable's FLIP transforms make them appear at old locations.
+  for (const entry of sharedState.pendingRemoteIntroAnims) {
+    entry.preComputedTargetRect = preComputeIntroTargetRect(entry.user, entry.songId, entry.index);
+  }
 
   if (sharedState.unrankedListEl) {
     if (reuseNodes) {
