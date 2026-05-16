@@ -213,21 +213,90 @@ function songElement(songId) {
   return songElementWithDrag(songId, true);
 }
 
-function songElementWithDrag(songId, isDraggable) {
+function updateSongElement(li, songId, isDraggable) {
   const song = state.songsById[songId];
-  const fragment = songTemplate.content.cloneNode(true);
-  const li = fragment.querySelector('.song-item');
+  if (!song) return li;
+
   const flagEl = li.querySelector('.flag');
+  const titleEl = li.querySelector('.song-title');
+  const artistEl = li.querySelector('.song-artist');
+  const youtubeEl = li.querySelector('.link-youtube');
+  const spotifyEl = li.querySelector('.link-spotify');
+
   li.dataset.songId = songId;
   li.setAttribute('draggable', isDraggable ? 'true' : 'false');
-  if (!isDraggable) li.classList.add('read-only-item');
-  flagEl.src = song.flatflag || '';
-  flagEl.alt = `${song.country} flag`;
-  li.querySelector('.song-title').textContent = song.title;
-  li.querySelector('.song-artist').textContent = song.artist;
-  li.querySelector('.link-youtube').href = song.youtube;
-  li.querySelector('.link-spotify').href = song.spotify;
+  li.classList.toggle('read-only-item', !isDraggable);
+
+  if (flagEl) {
+    const nextSrc = song.flatflag || '';
+    if (flagEl.getAttribute('src') !== nextSrc) {
+      flagEl.setAttribute('src', nextSrc);
+    }
+
+    const nextAlt = `${song.country} flag`;
+    if (flagEl.getAttribute('alt') !== nextAlt) {
+      flagEl.setAttribute('alt', nextAlt);
+    }
+  }
+
+  if (titleEl && titleEl.textContent !== song.title) {
+    titleEl.textContent = song.title;
+  }
+
+  if (artistEl && artistEl.textContent !== song.artist) {
+    artistEl.textContent = song.artist;
+  }
+
+  if (youtubeEl && youtubeEl.getAttribute('href') !== song.youtube) {
+    youtubeEl.setAttribute('href', song.youtube);
+  }
+
+  if (spotifyEl && spotifyEl.getAttribute('href') !== song.spotify) {
+    spotifyEl.setAttribute('href', song.spotify);
+  }
+
   return li;
+}
+
+function songElementWithDrag(songId, isDraggable) {
+  const fragment = songTemplate.content.cloneNode(true);
+  const li = fragment.querySelector('.song-item');
+  return updateSongElement(li, songId, isDraggable);
+}
+
+function renderSongList(listEl, orderedSongIds, isDraggable) {
+  const existingById = new Map();
+
+  for (const item of listEl.querySelectorAll('.song-item')) {
+    const songId = item.dataset.songId;
+    if (!songId || existingById.has(songId)) {
+      item.remove();
+      continue;
+    }
+    existingById.set(songId, item);
+  }
+
+  const fragment = document.createDocumentFragment();
+  const seen = new Set();
+
+  for (const songId of orderedSongIds) {
+    if (!songId || seen.has(songId) || !state.songsById[songId]) continue;
+    seen.add(songId);
+
+    const existing = existingById.get(songId);
+    const item = existing
+      ? updateSongElement(existing, songId, isDraggable)
+      : songElementWithDrag(songId, isDraggable);
+
+    fragment.appendChild(item);
+    existingById.delete(songId);
+  }
+
+  for (const staleItem of existingById.values()) {
+    staleItem.remove();
+  }
+
+  listEl.replaceChildren(fragment);
 }
 
 function dedupeDomSongs() {
@@ -289,16 +358,8 @@ function render() {
     return;
   }
 
-  rankedListEl.innerHTML = '';
-  notRankedListEl.innerHTML = '';
-
-  state.ranked.forEach((id) => {
-    if (state.songsById[id]) rankedListEl.appendChild(songElement(id));
-  });
-
-  state.notRanked.forEach((id) => {
-    if (state.songsById[id]) notRankedListEl.appendChild(songElement(id));
-  });
+  renderSongList(rankedListEl, state.ranked, true);
+  renderSongList(notRankedListEl, state.notRanked, true);
 
   updateEmptyState();
   initSortableHandlers();
@@ -443,10 +504,7 @@ function renderShared() {
   normalizeLocalUnranked();
 
   if (sharedState.unrankedListEl) {
-    sharedState.unrankedListEl.innerHTML = '';
-    for (const songId of sharedState.localUnranked) {
-      sharedState.unrankedListEl.appendChild(songElementWithDrag(songId, true));
-    }
+    renderSongList(sharedState.unrankedListEl, sharedState.localUnranked, true);
   }
 
   for (const user of sharedState.users) {
@@ -454,11 +512,7 @@ function renderShared() {
     if (!list) continue;
 
     const isOwn = user === sharedState.username;
-    list.innerHTML = '';
-
-    for (const songId of getRankedOnlyForUser(user)) {
-      list.appendChild(songElementWithDrag(songId, isOwn));
-    }
+    renderSongList(list, getRankedOnlyForUser(user), isOwn);
   }
 
   if (emptyStateEl) {
