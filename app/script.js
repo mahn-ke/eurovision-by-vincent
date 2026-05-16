@@ -57,14 +57,27 @@ function toSongId(song) {
   return `${country}::${artist}::${title}`;
 }
 
+function resolveFlatFlag(country, flatflag) {
+  const explicitFlatFlag = String(flatflag || '').trim();
+  if (explicitFlatFlag) return explicitFlatFlag;
+
+  const normalizedCountry = String(country || '').trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(normalizedCountry)) {
+    return `https://flagcdn.com/${normalizedCountry.toLowerCase()}.svg`;
+  }
+
+  return '';
+}
+
 function normalizeSong(raw) {
   const artist = String(raw.artist || raw.arist || '').trim();
   const title = String(raw.title || '').trim();
   const country = String(raw.country || '').trim().toUpperCase();
+  const flatflag = resolveFlatFlag(country, raw.flatflag);
   const youtube = String(raw.youtube || '').trim();
   const spotify = String(raw.spotify || '').trim();
   const id = toSongId({ artist, title, country });
-  return { id, artist, title, country, youtube, spotify };
+  return { id, artist, title, country, flatflag, youtube, spotify };
 }
 
 function sanitizeRanking(ranking) {
@@ -204,10 +217,12 @@ function songElementWithDrag(songId, isDraggable) {
   const song = state.songsById[songId];
   const fragment = songTemplate.content.cloneNode(true);
   const li = fragment.querySelector('.song-item');
+  const flagEl = li.querySelector('.flag');
   li.dataset.songId = songId;
   li.setAttribute('draggable', isDraggable ? 'true' : 'false');
   if (!isDraggable) li.classList.add('read-only-item');
-  li.querySelector('.country-pill span').textContent = song.country;
+  flagEl.src = song.flatflag || '';
+  flagEl.alt = `${song.country} flag`;
   li.querySelector('.song-title').textContent = song.title;
   li.querySelector('.song-artist').textContent = song.artist;
   li.querySelector('.link-youtube').href = song.youtube;

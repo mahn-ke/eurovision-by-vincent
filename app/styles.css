@@ -1,26 +1,11 @@
 @media (prefers-color-scheme: dark) {
-  html, img, .country-pill {
+  img {
     filter: invert(1) hue-rotate(180deg);
-  }
-
-  :root {
-    --pill-bg: #000 !important;
-    --pill-line: #444 !important;
-  }
-  
-  html.invert .country-pill span
-  { 
-    filter: invert(1) hue-rotate(180deg) !important;
   }
 }
 
 html.invert, html.invert img {
   filter: inherit;
-}
-
-html.invert .country-pill span
-{ 
-  filter: invert(1) hue-rotate(180deg) !important;
 }
 
 label {
@@ -36,17 +21,17 @@ label {
 }
 
 :root {
-  --bg: #fcfaf4;
-  --pill-bg: #fffdf8;
-  --surface: #fffdf8;
-  --surface-disabled: #d1d1d1;
-  --surface-alt: #f6efe1;
-  --line: #dbc8a0;
-  --pill-line: #e0c9a8;
-  --text: #2f2011;
-  --muted: #6f5a43;
-  --accent: #bb4d22;
-  --accent-soft: #f4d9c7;
+  --bg: #010a41;
+  --pill-bg: rgb(10 14 78 / 48%);
+  --surface: rgb(9 13 74 / 42%);
+  --surface-disabled: rgb(48 22 85 / 42%);
+  --surface-alt: rgb(18 20 97 / 42%);
+  --line: #6a63b8;
+  --pill-line: #7a73c7;
+  --text: #f7f3ff;
+  --muted: #d3cbef;
+  --accent: #ff4fa3;
+  --accent-soft: rgb(255 79 163 / 22%);
 }
 
 * {
@@ -58,10 +43,7 @@ body {
   min-height: 100vh;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(1000px 300px at 20% -10%, #f8dfca 0%, transparent 70%),
-    radial-gradient(700px 250px at 90% 0%, #f7eec8 0%, transparent 65%),
-    var(--bg);
+  background: radial-gradient(120% 150% at 90% -3%, #20f, #000c54 22.49%, #010a41 33.26% 64.14%, #4c0a54 85.82%, #ff0178) 0 0 / cover fixed;
 }
 
 header {
@@ -106,7 +88,7 @@ header {
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 1rem;
-  box-shadow: 0 10px 30px rgba(121, 86, 48, 0.08);
+  box-shadow: 0 14px 32px rgb(5 8 42 / 42%);
 }
 
 .panel h2 {
@@ -155,21 +137,30 @@ header {
   opacity: 0.6;
 }
 
-.country-pill {
+.flag-media {
   flex: 0 0 auto;
-  border: 1px solid var(--pill-line);
-  border-radius: 999px;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  background: var(--pill-bg);
+  margin-top: -13px;
+  margin-bottom: -12px;
+  margin-left: -11px;
+  font-size: 0;
+}
+
+.flag-media img {
+  display: block;
+  filter: inherit;
+  height: 65px;
+  width: 115px;
+  object-fit: cover;
+  margin-top: -0.65em;
+  margin-bottom: -0.65em;
+  filter: invert(1) hue-rotate(180deg);
 }
 
 .song-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  z-index: 1000;
 }
 
 .song-title {
