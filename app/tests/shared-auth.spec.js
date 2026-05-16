@@ -96,7 +96,7 @@ async function panelSongCount(page, panelSelector) {
 }
 
 test.describe('shared auth ranking', () => {
-  test('singleplayer and multiplayer rankings stay isolated when switching modes', async ({ page, browser }) => {
+  test('latest ranking persists across singleplayer and multiplayer for everyone', async ({ page, browser }) => {
     test.setTimeout(30_000);
 
     const port = 3201 + Math.floor(Math.random() * 1000);
@@ -120,9 +120,21 @@ test.describe('shared auth ranking', () => {
       await page.goto(`${baseUrl}/?token=abc&pollMs=1000`);
 
       await expect(page.locator('[data-user-panel]')).toHaveCount(3);
-      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(0);
-      await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Lied A');
-      await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Lied B');
+      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(2);
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied A');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied B');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied C');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied D');
+
+      bobPage = await browser.newPage();
+      await installSongsMock(bobPage, SHARED_SONGS);
+      await bobPage.goto(`${baseUrl}/?token=def&pollMs=1000`);
+
+      await expect.poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
+        timeout: 10_000,
+      }).toEqual(['Lied A', 'Lied B']);
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied C');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied D');
 
       await dragSongToPanelWithRetry(
         page,
@@ -139,41 +151,43 @@ test.describe('shared auth ranking', () => {
         '[data-user-panel][data-username="alice"]'
       );
 
-      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(2);
+      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(4);
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied A');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied B');
       await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied C');
       await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied D');
 
-      bobPage = await browser.newPage();
-      await installSongsMock(bobPage, SHARED_SONGS);
-      await bobPage.goto(`${baseUrl}/?token=def&pollMs=1000`);
-
-      await expect.poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
+      await expect.poll(async () => panelSongCount(bobPage, '[data-user-panel][data-username="alice"]'), {
         timeout: 10_000,
-      }).toEqual(['Lied C', 'Lied D']);
-      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied A');
-      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied B');
+      }).toBe(4);
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied A');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied B');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied C');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied D');
 
       await page.goto(`${baseUrl}/?pollMs=1000`);
 
-      await expect(page.locator('#rankedList .song-item')).toHaveCount(2);
+      await expect(page.locator('#rankedList .song-item')).toHaveCount(4);
       await expect(page.locator('#rankedList')).toContainText('Lied A');
       await expect(page.locator('#rankedList')).toContainText('Lied B');
-      await expect(page.locator('#rankedList')).not.toContainText('Lied C');
-      await expect(page.locator('#rankedList')).not.toContainText('Lied D');
+      await expect(page.locator('#rankedList')).toContainText('Lied C');
+      await expect(page.locator('#rankedList')).toContainText('Lied D');
 
       await page.goto(`${baseUrl}/?token=abc&pollMs=1000`);
 
-      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(2);
+      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(4);
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied A');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied B');
       await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied C');
       await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied D');
-      await expect(page.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied A');
-      await expect(page.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied B');
 
-      await expect.poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
+      await expect.poll(async () => panelSongCount(bobPage, '[data-user-panel][data-username="alice"]'), {
         timeout: 10_000,
-      }).toEqual(['Lied C', 'Lied D']);
-      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied A');
-      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied B');
+      }).toBe(4);
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied A');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied B');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied C');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied D');
     } finally {
       await bobPage?.close();
       await server.stop();

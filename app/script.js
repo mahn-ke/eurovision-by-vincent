@@ -129,6 +129,31 @@ function loadState() {
   }
 }
 
+function hasPersistedSingleplayerState() {
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+function applyRankingToSingleplayerState(ranking) {
+  const nextRanked = sanitizeRanking(ranking);
+  const seen = new Set(nextRanked);
+  const ordered = sanitizeRanking([...state.ranked, ...state.notRanked]);
+  const nextNotRanked = [];
+
+  for (const songId of ordered) {
+    if (!songId || seen.has(songId)) continue;
+    seen.add(songId);
+    nextNotRanked.push(songId);
+  }
+
+  state.ranked = nextRanked;
+  state.notRanked = nextNotRanked;
+  saveState();
+}
+
 function saveSharedOwnRanking() {
   if (!sharedState.enabled || !sharedState.username) return;
 
@@ -175,6 +200,9 @@ function setOwnRanking(ranking, source = 'local') {
   if (source !== 'remote') {
     saveSharedOwnRanking();
   }
+
+  // Keep the last own ranking consistent across singleplayer and multiplayer.
+  applyRankingToSingleplayerState(nextRanking);
 }
 
 async function resubmitOwnRankingIfNeeded() {
@@ -654,7 +682,7 @@ function applySharedSnapshot(payload) {
   if (sharedState.hasOwnRanking && sharedState.username) {
     sharedState.rankingsByUser[sharedState.username] = sharedState.ownRanking.slice();
   } else if (sharedState.username) {
-    sharedState.ownRanking = sanitizeRanking(sharedState.rankingsByUser[sharedState.username] || []);
+    setOwnRanking(sharedState.rankingsByUser[sharedState.username] || [], 'remote');
   }
 
   renderShared();
@@ -716,10 +744,20 @@ async function tryEnableSharedMode() {
     for (const user of sharedState.users) {
       sharedState.rankingsByUser[user] = [];
     }
+
+    loadState();
+    const hasSingleplayerState = hasPersistedSingleplayerState();
+    const singleplayerRanking = sanitizeRanking(state.ranked);
+
     loadSharedOwnRanking();
-    if (sharedState.hasOwnRanking) {
+
+    if (hasSingleplayerState) {
+      setOwnRanking(singleplayerRanking);
+    } else if (sharedState.hasOwnRanking) {
       sharedState.rankingsByUser[sharedState.username] = sharedState.ownRanking.slice();
+      applyRankingToSingleplayerState(sharedState.ownRanking);
     }
+
     sharedState.localUnranked = allKnownSongIds();
 
     renderShared();
