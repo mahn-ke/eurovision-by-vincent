@@ -45,6 +45,8 @@ const sharedState = {
   hasOwnRanking: false,
   sortableInitialized: false,
   dragging: false,
+  hasSnapshotBaseline: false,
+  pendingRemoteIntroAnims: [],
 };
 
 function sharedStorageKey(username) {
@@ -301,6 +303,15 @@ function collectSongItemPool(containers) {
   return pool;
 }
 
+function cssEscape(value) {
+  const raw = String(value || '');
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(raw);
+  }
+
+  return raw.replace(/[^a-zA-Z0-9_-]/g, (char) => `\\${char}`);
+}
+
 function ensureSortable(container, options) {
   const existing = sortableByList.get(container);
   if (existing) return existing;
@@ -356,7 +367,7 @@ function renderSongListWithPool(container, songIds, pool, isDraggable) {
     sortable.sort(orderedIds, true);
   } else {
     for (const songId of orderedIds) {
-      const item = container.querySelector(`.song-item[data-song-id="${CSS.escape(songId)}"]`);
+      const item = container.querySelector(`.song-item[data-song-id="${cssEscape(songId)}"]`);
       if (item) container.appendChild(item);
     }
   }
@@ -586,6 +597,163 @@ function getRankedOnlyForUser(user) {
   });
 }
 
+function detectRemoteIntroducedSongs(previousRankings, nextRankings) {
+  const introduced = [];
+
+  for (const user of sharedState.users) {
+    if (!user || user === sharedState.username) continue;
+
+    const previous = Array.isArray(previousRankings[user]) ? previousRankings[user] : [];
+    const previousSet = new Set(previous);
+    const next = Array.isArray(nextRankings[user]) ? nextRankings[user] : [];
+
+    for (let index = 0; index < next.length; index += 1) {
+      const songId = next[index];
+      if (!songId || previousSet.has(songId)) continue;
+      introduced.push({ user, songId, index });
+    }
+  }
+
+  return introduced;
+}
+
+function getSongElementFromList(list, songId) {
+  if (!list || !songId) return null;
+  return list.querySelector(`.song-item[data-song-id="${cssEscape(songId)}"]`);
+}
+
+function findLocalSourceSongElement(songId) {
+  const ownList = sharedState.listByUser.get(sharedState.username);
+  const ownItem = getSongElementFromList(ownList, songId);
+  if (ownItem) return ownItem;
+  return getSongElementFromList(sharedState.unrankedListEl, songId);
+}
+
+function computeIntroTargetRect(user, songId, index, targetEl) {
+  const fallback = targetEl.getBoundingClientRect();
+  const list = sharedState.listByUser.get(user);
+  if (!list) return fallback;
+
+  const ranking = getRankedOnlyForUser(user);
+  const previousId = index > 0 ? ranking[index - 1] : null;
+  const nextId = index < ranking.length - 1 ? ranking[index + 1] : null;
+  const previousEl = previousId ? getSongElementFromList(list, previousId) : null;
+  const nextEl = nextId ? getSongElementFromList(list, nextId) : null;
+  const style = window.getComputedStyle(targetEl);
+  const gap = Number.parseFloat(style.marginBottom) || 0;
+
+  if (previousEl) {
+    const previousRect = previousEl.getBoundingClientRect();
+    return {
+      left: previousRect.left,
+      top: previousRect.bottom + gap,
+      width: fallback.width,
+      height: fallback.height,
+    };
+  }
+
+  if (nextEl) {
+    const nextRect = nextEl.getBoundingClientRect();
+    return {
+      left: nextRect.left,
+      top: nextRect.top - fallback.height - gap,
+      width: fallback.width,
+      height: fallback.height,
+    };
+  }
+
+  return fallback;
+}
+
+function placeSongAtRankingIndex(user, songId, index) {
+  const list = sharedState.listByUser.get(user);
+  const target = getSongElementFromList(list, songId);
+  if (!list || !target) return;
+
+  const ranking = getRankedOnlyForUser(user);
+  const nextId = index < ranking.length - 1 ? ranking[index + 1] : null;
+  const nextEl = nextId ? getSongElementFromList(list, nextId) : null;
+  list.insertBefore(target, nextEl || null);
+}
+
+function animateRemoteSongIntroduction(user, songId, index) {
+  const prefersReducedMotion = typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion) return false;
+
+  const source = findLocalSourceSongElement(songId);
+  const targetList = sharedState.listByUser.get(user);
+  const target = getSongElementFromList(targetList, songId);
+  if (!source || !target) return false;
+
+  const sourceRect = source.getBoundingClientRect();
+  const targetRect = computeIntroTargetRect(user, songId, index, target);
+  if (!sourceRect.width || !sourceRect.height || !targetRect.width || !targetRect.height) return false;
+
+  target.classList.add('remote-intro-target-hidden');
+
+  const clone = source.cloneNode(true);
+  clone.classList.add('remote-intro-clone');
+  clone.style.left = `${sourceRect.left}px`;
+  clone.style.top = `${sourceRect.top}px`;
+  clone.style.width = `${sourceRect.width}px`;
+  clone.style.height = `${sourceRect.height}px`;
+  document.body.appendChild(clone);
+
+  const deltaX = targetRect.left - sourceRect.left;
+  const deltaY = targetRect.top - sourceRect.top;
+  const scaleX = targetRect.width / sourceRect.width;
+  const scaleY = targetRect.height / sourceRect.height;
+
+  const animation = clone.animate([
+    {
+      transform: 'translate(0px, 0px) scale(1, 1)',
+      opacity: 0.95,
+    },
+    {
+      transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`,
+      opacity: 0.6,
+    },
+  ], {
+    duration: 460,
+    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    fill: 'forwards',
+  });
+
+  const finish = () => {
+    clone.remove();
+    placeSongAtRankingIndex(user, songId, index);
+    target.classList.remove('remote-intro-target-hidden');
+    target.classList.add('remote-intro-target-highlight');
+    window.setTimeout(() => target.classList.remove('remote-intro-target-highlight'), 500);
+  };
+
+  if (typeof animation.addEventListener === 'function') {
+    animation.addEventListener('finish', finish, { once: true });
+    animation.addEventListener('cancel', finish, { once: true });
+  } else {
+    animation.onfinish = finish;
+    animation.oncancel = finish;
+  }
+
+  return true;
+}
+
+function runPendingRemoteIntroAnimations() {
+  if (sharedState.pendingRemoteIntroAnims.length === 0) return;
+
+  const entries = sharedState.pendingRemoteIntroAnims.slice();
+  sharedState.pendingRemoteIntroAnims = [];
+
+  for (const entry of entries) {
+    try {
+      animateRemoteSongIntroduction(entry.user, entry.songId, entry.index);
+    } catch {
+      // Animation failures must never interrupt shared-mode rendering.
+    }
+  }
+}
+
 function renderShared(reuseNodes = false) {
   ensureSharedShell();
   if (sharedState.dragging) return;
@@ -623,6 +791,7 @@ function renderShared(reuseNodes = false) {
   }
 
   initSharedSortable();
+  runPendingRemoteIntroAnimations();
 }
 
 function syncOwnRankingFromDom() {
@@ -707,13 +876,15 @@ function initSharedSortable() {
 
 function applySharedSnapshot(payload) {
   if (!payload || typeof payload !== 'object') return;
+  const previousRankings = { ...sharedState.rankingsByUser };
   const users = arrangeUsers(payload.users, sharedState.username);
   if (users.length > 0) {
     sharedState.users = users;
   }
 
+  let nextRankings = null;
   if (payload.rankings && typeof payload.rankings === 'object') {
-    const nextRankings = {};
+    nextRankings = {};
     for (const user of sharedState.users) {
       nextRankings[user] = Array.isArray(payload.rankings[user]) ? payload.rankings[user].slice() : [];
     }
@@ -732,7 +903,12 @@ function applySharedSnapshot(payload) {
     setOwnRanking(sharedState.rankingsByUser[sharedState.username] || [], 'remote');
   }
 
+  if (sharedState.hasSnapshotBaseline && nextRankings) {
+    sharedState.pendingRemoteIntroAnims = detectRemoteIntroducedSongs(previousRankings, nextRankings);
+  }
+
   renderShared();
+  sharedState.hasSnapshotBaseline = true;
 }
 
 async function fetchSharedRankings() {

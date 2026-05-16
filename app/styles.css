@@ -129,6 +129,36 @@ header {
   opacity: 0.6;
 }
 
+.song-item.remote-intro-target-hidden {
+  opacity: 0;
+}
+
+.song-item.remote-intro-target-highlight {
+  animation: remote-intro-highlight 500ms ease-out;
+}
+
+.remote-intro-clone {
+  position: fixed;
+  margin: 0;
+  pointer-events: none;
+  z-index: 5000;
+  overflow: hidden;
+  will-change: transform, opacity;
+  box-shadow: 0 16px 28px rgb(5 8 42 / 45%);
+}
+
+@keyframes remote-intro-highlight {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 65%, transparent);
+    filter: brightness(1.14);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    filter: brightness(1);
+  }
+}
+
 .flag-media {
   flex: 0 0 auto;
   margin-top: -13px;
