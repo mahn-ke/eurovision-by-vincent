@@ -30,7 +30,7 @@ test.describe('suite no state', () => {
 
     await expect(page.locator('#notRankedList .song-item')).toHaveCount(0);
     await expect(page.locator('#rankedList .song-item')).toHaveCount(0);
-    await expect(page.getByText('Noch keine Lieder verfuegbar.')).toBeVisible();
+    await expect(page.getByText('Noch keine Lieder verf&uuml;gbar.')).toBeVisible();
     await expectUniqueSongTitles(page);
   });
 
