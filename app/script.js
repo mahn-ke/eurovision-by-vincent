@@ -25,6 +25,7 @@ const state = {
 };
 
 let sortablesInitialized = false;
+const sortableByList = new WeakMap();
 const dragState = {
   active: false,
   songId: null,
@@ -300,17 +301,37 @@ function collectSongItemPool(containers) {
   return pool;
 }
 
+function ensureSortable(container, options) {
+  const existing = sortableByList.get(container);
+  if (existing) return existing;
+
+  const sortable = Sortable.create(container, {
+    animation: 150,
+    dataIdAttr: 'data-song-id',
+    ...options,
+  });
+
+  sortableByList.set(container, sortable);
+  return sortable;
+}
+
 function renderSongListWithPool(container, songIds, pool, isDraggable) {
   const seen = new Set();
+  const orderedIds = [];
 
   for (const songId of songIds) {
     if (!state.songsById[songId] || seen.has(songId)) continue;
     seen.add(songId);
+    orderedIds.push(songId);
 
     const item = pool.get(songId) || songElementWithDrag(songId, isDraggable);
     pool.delete(songId);
     applySongToElement(item, songId, isDraggable);
-    container.appendChild(item);
+
+    // Only append if needed (new item or moved across lists); reorder is animated by Sortable.sort.
+    if (item.parentElement !== container) {
+      container.appendChild(item);
+    }
   }
 
   const inDomSeen = new Set();
@@ -327,6 +348,17 @@ function renderSongListWithPool(container, songIds, pool, isDraggable) {
     }
 
     inDomSeen.add(songId);
+  }
+
+  const sortable = sortableByList.get(container);
+  const animateReorder = container.dataset.animateReorder === 'true';
+  if (sortable && animateReorder) {
+    sortable.sort(orderedIds, true);
+  } else {
+    for (const songId of orderedIds) {
+      const item = container.querySelector(`.song-item[data-song-id="${CSS.escape(songId)}"]`);
+      if (item) container.appendChild(item);
+    }
   }
 }
 
@@ -532,6 +564,7 @@ function ensureSharedShell() {
       listDataset: {
         userList: 'true',
         username,
+        animateReorder: isOwn ? 'false' : 'true',
       },
     });
 
@@ -575,7 +608,7 @@ function renderShared(reuseNodes = false) {
     if (!list) continue;
 
     const isOwn = user === sharedState.username;
-    if (reuseNodes) {
+    if (reuseNodes || !isOwn) {
       renderSongList(list, getRankedOnlyForUser(user), isOwn);
     } else {
       list.innerHTML = '';
@@ -596,6 +629,7 @@ function syncOwnRankingFromDom() {
   const ownList = sharedState.listByUser.get(sharedState.username);
   if (!ownList) return [];
   return [...ownList.querySelectorAll('.song-item')]
+    .filter((item) => !isTransientSortableItem(item))
     .map((item) => item.dataset.songId)
     .filter((songId) => Boolean(songId && state.songsById[songId]));
 }
@@ -603,8 +637,16 @@ function syncOwnRankingFromDom() {
 function syncLocalUnrankedFromDom() {
   if (!sharedState.unrankedListEl) return [];
   return [...sharedState.unrankedListEl.querySelectorAll('.song-item')]
+    .filter((item) => !isTransientSortableItem(item))
     .map((item) => item.dataset.songId)
     .filter((songId) => Boolean(songId && state.songsById[songId]));
+}
+
+function isTransientSortableItem(item) {
+  return item.classList.contains('sortable-ghost')
+    || item.classList.contains('sortable-chosen')
+    || item.classList.contains('sortable-drag')
+    || item.classList.contains('sortable-fallback');
 }
 
 async function persistOwnRanking(ranking) {
@@ -641,19 +683,24 @@ function initSharedSortable() {
     sharedState.dragging = true;
   };
 
-  Sortable.create(ownList, {
+  ensureSortable(ownList, {
     group: 'shared-songs',
-    animation: 150,
     onStart: onDragStart,
     onEnd: onDragEnd,
   });
 
-  Sortable.create(unrankedList, {
+  ensureSortable(unrankedList, {
     group: 'shared-songs',
-    animation: 150,
     onStart: onDragStart,
     onEnd: onDragEnd,
   });
+
+  for (const [user, list] of sharedState.listByUser.entries()) {
+    if (user === sharedState.username) continue;
+    ensureSortable(list, {
+      sort: false,
+    });
+  }
 
   sharedState.sortableInitialized = true;
 }
@@ -812,16 +859,14 @@ function initSortableHandlers() {
     dragState.songId = event.item?.dataset.songId || null;
   };
 
-  Sortable.create(rankedListEl, {
+  ensureSortable(rankedListEl, {
     group: 'songs',
-    animation: 150,
     onStart: onDragStart,
     onEnd: onDragEnd,
   });
 
-  Sortable.create(notRankedListEl, {
+  ensureSortable(notRankedListEl, {
     group: 'songs',
-    animation: 150,
     onStart: onDragStart,
     onEnd: onDragEnd,
   });
