@@ -80,11 +80,106 @@ async function dragSongToPanel(page, fromSelector, songTitle, toSelector) {
   await source.dragTo(target);
 }
 
+async function dragSongToPanelWithRetry(page, fromSelector, songTitle, toSelector, targetPanelSelector) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await dragSongToPanel(page, fromSelector, songTitle, toSelector);
+
+    const targetText = ((await page.locator(targetPanelSelector).first().textContent()) || '').trim();
+    if (targetText.includes(songTitle)) return;
+  }
+
+  throw new Error(`Could not move ${songTitle} into ${targetPanelSelector}`);
+}
+
 async function panelSongCount(page, panelSelector) {
   return page.locator(`${panelSelector} .song-item`).count();
 }
 
 test.describe('shared auth ranking', () => {
+  test('singleplayer and multiplayer rankings stay isolated when switching modes', async ({ page, browser }) => {
+    test.setTimeout(30_000);
+
+    const port = 3201 + Math.floor(Math.random() * 1000);
+    const baseUrl = testBaseUrl(port);
+    const server = startTestServer(port);
+    let bobPage;
+
+    try {
+      await server.waitUntilReady();
+      await installSongsMock(page, SHARED_SONGS);
+
+      await page.goto(`${baseUrl}/?pollMs=1000`);
+
+      await expect(page.locator('#notRankedList .song-item')).toHaveCount(8);
+      await dragSongToPanelWithRetry(page, '#notRankedList', 'Lied A', '#rankedList', '#rankedList');
+      await dragSongToPanelWithRetry(page, '#notRankedList', 'Lied B', '#rankedList', '#rankedList');
+      await expect(page.locator('#rankedList .song-item')).toHaveCount(2);
+      await expect(page.locator('#rankedList')).toContainText('Lied A');
+      await expect(page.locator('#rankedList')).toContainText('Lied B');
+
+      await page.goto(`${baseUrl}/?token=abc&pollMs=1000`);
+
+      await expect(page.locator('[data-user-panel]')).toHaveCount(3);
+      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(0);
+      await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Lied A');
+      await expect(page.locator('[data-panel-role="unranked"]')).toContainText('Lied B');
+
+      await dragSongToPanelWithRetry(
+        page,
+        '[data-panel-role="unranked"]',
+        'Lied C',
+        '[data-user-panel][data-username="alice"] [data-user-list="true"]',
+        '[data-user-panel][data-username="alice"]'
+      );
+      await dragSongToPanelWithRetry(
+        page,
+        '[data-panel-role="unranked"]',
+        'Lied D',
+        '[data-user-panel][data-username="alice"] [data-user-list="true"]',
+        '[data-user-panel][data-username="alice"]'
+      );
+
+      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(2);
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied C');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied D');
+
+      bobPage = await browser.newPage();
+      await installSongsMock(bobPage, SHARED_SONGS);
+      await bobPage.goto(`${baseUrl}/?token=def&pollMs=1000`);
+
+      await expect.poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
+        timeout: 10_000,
+      }).toEqual(['Lied C', 'Lied D']);
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied A');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied B');
+
+      await page.goto(`${baseUrl}/?pollMs=1000`);
+
+      await expect(page.locator('#rankedList .song-item')).toHaveCount(2);
+      await expect(page.locator('#rankedList')).toContainText('Lied A');
+      await expect(page.locator('#rankedList')).toContainText('Lied B');
+      await expect(page.locator('#rankedList')).not.toContainText('Lied C');
+      await expect(page.locator('#rankedList')).not.toContainText('Lied D');
+
+      await page.goto(`${baseUrl}/?token=abc&pollMs=1000`);
+
+      await expect(page.locator('[data-user-panel][data-username="alice"] .song-item')).toHaveCount(2);
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied C');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).toContainText('Lied D');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied A');
+      await expect(page.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied B');
+
+      await expect.poll(async () => firstTwoTitles(bobPage, '[data-user-panel][data-username="alice"]'), {
+        timeout: 10_000,
+      }).toEqual(['Lied C', 'Lied D']);
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied A');
+      await expect(bobPage.locator('[data-user-panel][data-username="alice"]')).not.toContainText('Lied B');
+    } finally {
+      await bobPage?.close();
+      await server.stop();
+    }
+  });
+
   test('invalid token keeps anonymous two-column behavior', async ({ page }) => {
     await installSongsMock(page, SHARED_SONGS);
     await page.goto('/?token=does-not-exist&pollMs=1000');
