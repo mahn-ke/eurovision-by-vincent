@@ -3,7 +3,7 @@ version: "3.8"
 
 services:
   app:
-    image: ghcr.io/mahn-ke/eurovision-by-vincent:latest@sha256:6096355c8ccb57f5d0a506d3656b5043c1eaa3165a77c02022462a416ae1f7f0
+    image: ghcr.io/mahn-ke/eurovision-by-vincent:latest@sha256:734f16f094a92201d0a6d77897aa806f8681344a7aa68e99edb0174017a9dee4
     restart: on-failure:5
     environment:
       - PORT=3000
