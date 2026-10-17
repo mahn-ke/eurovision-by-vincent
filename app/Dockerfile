@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.64.0-noble AS test
+FROM mcr.microsoft.com/playwright:v1.64.1-noble AS test
 
 WORKDIR /app
 COPY ./ /app
